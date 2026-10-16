@@ -18,8 +18,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Probelauf auf einer Wegwerf-Datenbank im GitHub-Runner (ADR-0003).
+  # Scheitert er, wird Produktion nicht angefasst.
+  migrationen-probelauf:
+    name: Migrationen-Probelauf
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Neue Migrationen stehen in begin; … commit;
+        run: bash scripts/pruefe-migrationen.sh
+      - name: Wegwerf-Datenbank starten
+        run: npx supabase db start
+      - name: Alle Migrationen auf der Wegwerf-Datenbank einspielen
+        run: npx supabase db push --local --include-all
+
   migrationen:
     name: Migrationen auf Produktion
+    needs: migrationen-probelauf
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1

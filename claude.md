@@ -11,6 +11,7 @@ Erstes Kernfeature ist die objektbezogene Zeiterfassung der Mitarbeiter vor Ort,
 - Next.js mit TypeScript, Node.js 24
 - Hosting: Vercel (EU-Region)
 - Datenbank: Supabase (Postgres, EU-Region), Login: Supabase Auth (mit Resend)
+- Datenbank-Migrationen: in `begin;` … `commit;`, Zugriffsregeln direkt nach `create table`. See `docs/adr/0003-migrationen-ganz-oder-gar-nicht.md`.
 - Ziel: verbreitete Standardtechnik, für andere Entwickler übernehmbar, Daten jederzeit exportierbar. Nichts Exotisches einführen.
 
 # Arbeitsweise
