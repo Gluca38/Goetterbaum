@@ -493,18 +493,67 @@ test("Tagesgrenzen stimmen beim Wechsel auf die Winterzeit", () => {
   ]);
 });
 
-test("Zeiteinträge zählen zum Zeitraum, in dem sie beginnen", () => {
+test("Noch offene Zeiteinträge aus früheren Zeiträumen werden mit abgerechnet, spätere nicht", () => {
   const zeiteintraege = [
+    // z. B. erst nach der Juni-Abrechnung freigegeben
     eintrag("2026-06-30T22:00:00+02:00", "2026-06-30T23:00:00+02:00", { id: "juni" }),
+    // beginnt im Juli und zählt deshalb ganz zum Juli
     eintrag("2026-07-31T23:00:00+02:00", "2026-08-01T01:00:00+02:00", { id: "monatsende" }),
     eintrag("2026-08-01T00:30:00+02:00", "2026-08-01T01:30:00+02:00", { id: "august" }),
   ];
   const ergebnis = rechnungsvorbereitung(
     eingabe({ kunde: minutengenau, objekte: [stundenObjekt], zeiteintraege }),
   );
-  expect(ergebnis.zeiteintragIds).toEqual(["monatsende"]);
+  expect(ergebnis.zeiteintragIds).toEqual(["juni", "monatsende"]);
   expect(ergebnis.stundennachweis.map((t) => [t.datum, t.minuten])).toEqual([
+    ["2026-06-30", 60],
     ["2026-07-31", 60],
     ["2026-08-01", 60],
   ]);
+});
+
+test("Mit dem Festbetrag gilt auch die Zeit aus früheren Monaten als abgerechnet", () => {
+  const ergebnis = rechnungsvorbereitung(
+    eingabe({
+      ersterMonat: "2026-08",
+      objekte: [stundenObjekt],
+      zusatzauftraege: [
+        {
+          id: "grundreinigung",
+          objektId: "villa",
+          abrechnungsart: "festbetrag",
+          festbetragCent: 89000,
+          erledigt: true,
+        },
+      ],
+      zeiteintraege: [
+        eintrag("2026-07-28T08:00:00+02:00", "2026-07-28T16:00:00+02:00", {
+          id: "juli",
+          zusatzauftragId: "grundreinigung",
+        }),
+        eintrag("2026-08-03T08:00:00+02:00", "2026-08-03T12:00:00+02:00", {
+          id: "august",
+          zusatzauftragId: "grundreinigung",
+        }),
+      ],
+    }),
+  );
+  expect(ergebnis.zeiteintragIds).toEqual(["juli", "august"]);
+  expect(ergebnis.summeCent).toBe(89000);
+});
+
+test("Zeiteinträge mit unbekannter Tätigkeit werden weder berechnet noch als abgerechnet markiert", () => {
+  const ergebnis = rechnungsvorbereitung(
+    eingabe({
+      objekte: [stundenObjekt],
+      zeiteintraege: [
+        eintrag("2026-07-06T08:00:00+02:00", "2026-07-06T09:00:00+02:00", {
+          taetigkeitId: "unbekannt",
+        }),
+      ],
+    }),
+  );
+  expect(ergebnis.positionen).toEqual([]);
+  expect(ergebnis.zeiteintragIds).toEqual([]);
+  expect(ergebnis.stundennachweis).toEqual([]);
 });

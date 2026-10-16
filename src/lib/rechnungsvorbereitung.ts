@@ -2,6 +2,10 @@
 // Rechnungsvorbereitung für einen Abrechnungszeitraum. Ein reiner
 // Baustein ohne Datenbank und Oberfläche; er ist die einzige Stelle, an
 // der Geld berechnet wird. Alle Beträge in Cent als ganze Zahlen.
+import {
+  aufBerlinerTageVerteilt,
+  berlinerMitternacht,
+} from "./berliner-zeit";
 
 // Ein Monat als "JJJJ-MM", z. B. "2026-07".
 export type Monat = string;
@@ -49,38 +53,31 @@ export type Eingabe = {
   // Erster Monat des Abrechnungszeitraums; quartalsweise umfasst er drei.
   ersterMonat: Monat;
   objekte: Objekt[];
+  // Alle Tätigkeiten, die in den Zeiteinträgen vorkommen (auch archivierte).
   taetigkeiten: Taetigkeit[];
+  // Nur noch nicht abgerechnete Zusatzaufträge der Objekte.
   zusatzauftraege: Zusatzauftrag[];
   // Freigegebene, noch nicht abgerechnete Zeiteinträge des Kunden.
   zeiteintraege: Zeiteintrag[];
   abgerechnetePauschalMonate: { objektId: string; monat: Monat }[];
 };
 
+// Ein Zeiteintrag für eine Tätigkeit in einem Objekt (keine Fahrt).
+type ObjektEintrag = Zeiteintrag & { objektId: string; taetigkeitId: string };
+
+// Nach Stunden berechnete Arbeit einer Tätigkeit.
+export type Stunden = {
+  taetigkeitId: string;
+  // Gerundete Minuten; Stunden = minuten / 60.
+  minuten: number;
+  stundensatzCent: number;
+  betragCent: number;
+};
+
 export type Position =
-  | {
-      art: "pauschale";
-      objektId: string;
-      monat: Monat;
-      betragCent: number;
-    }
-  | {
-      art: "stunden";
-      objektId: string;
-      taetigkeitId: string;
-      // Gerundete Minuten; Stunden = minuten / 60.
-      minuten: number;
-      stundensatzCent: number;
-      betragCent: number;
-    }
-  | {
-      art: "zusatzauftrag-stunden";
-      zusatzauftragId: string;
-      objektId: string;
-      taetigkeitId: string;
-      minuten: number;
-      stundensatzCent: number;
-      betragCent: number;
-    }
+  | { art: "pauschale"; objektId: string; monat: Monat; betragCent: number }
+  | ({ art: "stunden"; objektId: string } & Stunden)
+  | ({ art: "zusatzauftrag-stunden"; zusatzauftragId: string; objektId: string } & Stunden)
   | {
       art: "zusatzauftrag-festbetrag";
       zusatzauftragId: string;
@@ -109,11 +106,19 @@ export type Rechnungsvorbereitung = {
 };
 
 export function rechnungsvorbereitung(eingabe: Eingabe): Rechnungsvorbereitung {
-  const objektNummer = (id: string) => eingabe.objekte.findIndex((o) => o.id === id);
-  const taetigkeitNummer = (id: string) =>
-    eingabe.taetigkeiten.findIndex((t) => t.id === id);
+  // Die Stelle in der Eingabeliste bestimmt die Reihenfolge der Ausgabe;
+  // -1 heißt: nicht in der Eingabe.
+  const objektStelle = (id: string) => eingabe.objekte.findIndex((o) => o.id === id);
+  const taetigkeitStelle = (id: string) => eingabe.taetigkeiten.findIndex((t) => t.id === id);
+  const zusatzauftragStelle = (id: string | null) =>
+    eingabe.zusatzauftraege.findIndex((za) => za.id === id);
 
-  const monate = monateImZeitraum(eingabe);
+  const anzahlMonate = eingabe.kunde.abrechnungszeitraum === "quartalsweise" ? 3 : 1;
+  const monate = Array.from({ length: anzahlMonate }, (_, i) =>
+    spaeterMonat(eingabe.ersterMonat, i),
+  );
+  const zeitraumEnde = berlinerMitternacht(`${spaeterMonat(eingabe.ersterMonat, anzahlMonate)}-01`);
+
   const positionen: Position[] = [];
   for (const objekt of eingabe.objekte) {
     if (objekt.abrechnungsart !== "pauschale") continue;
@@ -131,20 +136,19 @@ export function rechnungsvorbereitung(eingabe: Eingabe): Rechnungsvorbereitung {
     }
   }
 
-  const zusatzauftrag = (id: string) => eingabe.zusatzauftraege.find((za) => za.id === id);
-  const zusatzauftragNummer = (id: string | null) =>
-    id === null ? -1 : eingabe.zusatzauftraege.findIndex((za) => za.id === id);
-
-  // Zeit für einen Zusatzauftrag mit Festbetrag bleibt offen, bis er
-  // erledigt ist und sein Betrag abgerechnet wird. Fahrten und Zeit in
-  // fremden Objekten gehören nie dazu. Ein Zeiteintrag zählt zu dem
-  // Zeitraum, in dem er (in Berlin) beginnt.
-  const umfassteZeiteintraege = eingabe.zeiteintraege.filter((z) => {
-    if (z.objektId === null || objektNummer(z.objektId) < 0) return false;
-    if (!monate.includes(berlinerDatum(Date.parse(z.beginn)).slice(0, 7))) return false;
-    if (z.zusatzauftragId === null) return true;
-    const za = zusatzauftrag(z.zusatzauftragId);
-    return za !== undefined && (za.abrechnungsart === "stunden" || za.erledigt);
+  // Abgerechnet wird alle noch offene Zeit bis zum Ende des Zeitraums, auch
+  // spät freigegebene aus früheren Zeiträumen. Zeit für einen Zusatzauftrag
+  // mit Festbetrag gehört ganz zu dessen Betrag und wird mit ihm
+  // abgerechnet, sobald er erledigt ist. Fahrten und Zeit in fremden
+  // Objekten gehören nie dazu.
+  const umfassteZeiteintraege = eingabe.zeiteintraege.filter((z): z is ObjektEintrag => {
+    if (z.art === "fahrt" || z.objektId === null || z.taetigkeitId === null) return false;
+    if (objektStelle(z.objektId) < 0 || taetigkeitStelle(z.taetigkeitId) < 0) return false;
+    const imZeitraum = Date.parse(z.beginn) < zeitraumEnde;
+    if (z.zusatzauftragId === null) return imZeitraum;
+    const za = eingabe.zusatzauftraege[zusatzauftragStelle(z.zusatzauftragId)];
+    if (za === undefined) return false;
+    return za.abrechnungsart === "festbetrag" ? za.erledigt : imZeitraum;
   });
 
   // Nach Stunden berechnet werden die reguläre Zeit in Stunden-Objekten und
@@ -153,60 +157,51 @@ export function rechnungsvorbereitung(eingabe: Eingabe): Rechnungsvorbereitung {
   const berechneteTage = gerundeteTage(umfassteZeiteintraege, eingabe.kunde.rundungsregel)
     .filter((t) =>
       t.zusatzauftragId === null
-        ? eingabe.objekte[objektNummer(t.objektId)].abrechnungsart === "stunden"
-        : zusatzauftrag(t.zusatzauftragId)?.abrechnungsart === "stunden",
+        ? eingabe.objekte[objektStelle(t.objektId)].abrechnungsart === "stunden"
+        : eingabe.zusatzauftraege[zusatzauftragStelle(t.zusatzauftragId)].abrechnungsart ===
+          "stunden",
     )
     .sort(
       (a, b) =>
         a.datum.localeCompare(b.datum) ||
-        objektNummer(a.objektId) - objektNummer(b.objektId) ||
-        zusatzauftragNummer(a.zusatzauftragId) - zusatzauftragNummer(b.zusatzauftragId) ||
-        taetigkeitNummer(a.taetigkeitId) - taetigkeitNummer(b.taetigkeitId),
+        objektStelle(a.objektId) - objektStelle(b.objektId) ||
+        zusatzauftragStelle(a.zusatzauftragId) - zusatzauftragStelle(b.zusatzauftragId) ||
+        taetigkeitStelle(a.taetigkeitId) - taetigkeitStelle(b.taetigkeitId),
     );
 
-  // Minuten und Betrag je Tätigkeit für die Tage, die zur Position gehören.
-  function jeTaetigkeit(gehoertDazu: (t: GerundeterTag) => boolean) {
+  // Die Stunden je Tätigkeit aus den Tagen, die zu einer Position gehören.
+  function stundenJeTaetigkeit(gehoertDazu: (tag: GerundeterTag) => boolean): Stunden[] {
     return eingabe.taetigkeiten.flatMap((taetigkeit) => {
       const minuten = berechneteTage
-        .filter((t) => gehoertDazu(t) && t.taetigkeitId === taetigkeit.id)
-        .reduce((summe, t) => summe + t.minuten, 0);
+        .filter((tag) => gehoertDazu(tag) && tag.taetigkeitId === taetigkeit.id)
+        .reduce((summe, tag) => summe + tag.minuten, 0);
       if (minuten === 0) return [];
       const stundensatzCent =
         taetigkeit.kundenStundensatzCent ?? taetigkeit.standardStundensatzCent;
-      return [
-        {
-          taetigkeitId: taetigkeit.id,
-          minuten,
-          stundensatzCent,
-          betragCent: Math.round((minuten * stundensatzCent) / 60),
-        },
-      ];
+      const betragCent = Math.round((minuten * stundensatzCent) / 60);
+      return [{ taetigkeitId: taetigkeit.id, minuten, stundensatzCent, betragCent }];
     });
   }
 
   for (const objekt of eingabe.objekte) {
-    const stunden = jeTaetigkeit((t) => t.objektId === objekt.id && t.zusatzauftragId === null);
-    for (const s of stunden) positionen.push({ art: "stunden", objektId: objekt.id, ...s });
+    const regulaer = (tag: GerundeterTag) =>
+      tag.objektId === objekt.id && tag.zusatzauftragId === null;
+    for (const stunden of stundenJeTaetigkeit(regulaer)) {
+      positionen.push({ art: "stunden", objektId: objekt.id, ...stunden });
+    }
   }
-  for (const za of eingabe.zusatzauftraege) {
-    if (objektNummer(za.objektId) < 0) continue;
-    if (za.abrechnungsart === "festbetrag") {
-      if (!za.erledigt) continue;
-      positionen.push({
-        art: "zusatzauftrag-festbetrag",
-        zusatzauftragId: za.id,
-        objektId: za.objektId,
-        betragCent: za.festbetragCent ?? 0,
-      });
+  for (const zusatzauftrag of eingabe.zusatzauftraege) {
+    const { id: zusatzauftragId, objektId } = zusatzauftrag;
+    if (objektStelle(objektId) < 0) continue;
+    if (zusatzauftrag.abrechnungsart === "festbetrag") {
+      if (!zusatzauftrag.erledigt) continue;
+      const betragCent = zusatzauftrag.festbetragCent ?? 0;
+      positionen.push({ art: "zusatzauftrag-festbetrag", zusatzauftragId, objektId, betragCent });
       continue;
     }
-    for (const s of jeTaetigkeit((t) => t.zusatzauftragId === za.id)) {
-      positionen.push({
-        art: "zusatzauftrag-stunden",
-        zusatzauftragId: za.id,
-        objektId: za.objektId,
-        ...s,
-      });
+    const fuerAuftrag = (tag: GerundeterTag) => tag.zusatzauftragId === zusatzauftragId;
+    for (const stunden of stundenJeTaetigkeit(fuerAuftrag)) {
+      positionen.push({ art: "zusatzauftrag-stunden", zusatzauftragId, objektId, ...stunden });
     }
   }
 
@@ -219,19 +214,17 @@ export function rechnungsvorbereitung(eingabe: Eingabe): Rechnungsvorbereitung {
   };
 }
 
-function monateImZeitraum(eingabe: Eingabe): Monat[] {
-  const anzahl = eingabe.kunde.abrechnungszeitraum === "quartalsweise" ? 3 : 1;
-  const [jahr, monat] = eingabe.ersterMonat.split("-").map(Number);
-  return Array.from({ length: anzahl }, (_, i) => {
-    const datum = new Date(Date.UTC(jahr, monat - 1 + i, 1));
-    return datum.toISOString().slice(0, 7);
-  });
+// Der Monat, der `anzahl` Monate nach `monat` liegt.
+function spaeterMonat(monat: Monat, anzahl: number): Monat {
+  const [jahr, nummer] = monat.split("-").map(Number);
+  return new Date(Date.UTC(jahr, nummer - 1 + anzahl, 1)).toISOString().slice(0, 7);
 }
 
-// Fasst die Zeiteinträge je Objekt, Tätigkeit, Zusatzauftrag und
-// Kalendertag zusammen und rundet die Summe.
+// Fasst Zeiteinträge mit Objekt und Tätigkeit je Objekt, Tätigkeit,
+// Zusatzauftrag und Kalendertag zusammen und rundet die Summe. Sekunden
+// werden zuerst auf ganze Minuten gerundet.
 function gerundeteTage(
-  zeiteintraege: Zeiteintrag[],
+  zeiteintraege: ObjektEintrag[],
   regel: Kunde["rundungsregel"],
 ): GerundeterTag[] {
   type Gruppe = Omit<GerundeterTag, "minuten" | "personen"> & {
@@ -240,8 +233,7 @@ function gerundeteTage(
   };
   const gruppen = new Map<string, Gruppe>();
   for (const z of zeiteintraege) {
-    if (z.objektId === null || z.taetigkeitId === null) continue;
-    for (const { datum, ms } of aufTageVerteilt(z)) {
+    for (const { datum, ms } of aufBerlinerTageVerteilt(Date.parse(z.beginn), Date.parse(z.ende))) {
       const schluessel = [z.objektId, z.taetigkeitId, z.zusatzauftragId, datum].join("|");
       const gruppe = gruppen.get(schluessel) ?? {
         datum,
@@ -266,63 +258,4 @@ function gerundeteTage(
 function runde(minuten: number, regel: Kunde["rundungsregel"]): number {
   if (regel === "minutengenau") return minuten;
   return Math.ceil(minuten / 15) * 15;
-}
-
-// Teilt einen Zeiteintrag an den Mitternachtsgrenzen in Berlin auf.
-function aufTageVerteilt(z: Zeiteintrag): { datum: string; ms: number }[] {
-  const ende = Date.parse(z.ende);
-  const stuecke: { datum: string; ms: number }[] = [];
-  let von = Date.parse(z.beginn);
-  while (von < ende) {
-    const datum = berlinerDatum(von);
-    const bis = Math.min(ende, berlinerMitternacht(naechsterTag(datum)));
-    stuecke.push({ datum, ms: bis - von });
-    von = bis;
-  }
-  return stuecke;
-}
-
-const berlinerUhr = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Europe/Berlin",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hourCycle: "h23",
-});
-
-// Die Uhrzeit in Berlin zu einem Zeitpunkt, als Zahlen.
-function berlinerZeit(zeitpunkt: number) {
-  const teile = Object.fromEntries(
-    berlinerUhr.formatToParts(zeitpunkt).map((t) => [t.type, Number(t.value)]),
-  );
-  return teile as Record<"year" | "month" | "day" | "hour" | "minute" | "second", number>;
-}
-
-// Kalendertag in Berlin als "JJJJ-MM-TT".
-function berlinerDatum(zeitpunkt: number): string {
-  const { year, month, day } = berlinerZeit(zeitpunkt);
-  return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10);
-}
-
-// Wie weit Berlin zu einem Zeitpunkt der UTC-Zeit voraus ist, in ms.
-function berlinerVersatz(zeitpunkt: number): number {
-  const t = berlinerZeit(zeitpunkt);
-  const alsUtc = Date.UTC(t.year, t.month - 1, t.day, t.hour, t.minute, t.second);
-  return alsUtc - Math.floor(zeitpunkt / 1000) * 1000;
-}
-
-// Der Zeitpunkt, zu dem in Berlin der Tag beginnt. Der Wechsel zwischen
-// Sommer- und Winterzeit liegt nie auf Mitternacht.
-function berlinerMitternacht(datum: string): number {
-  const mitternachtUtc = Date.parse(`${datum}T00:00:00Z`);
-  return mitternachtUtc - berlinerVersatz(mitternachtUtc - berlinerVersatz(mitternachtUtc));
-}
-
-function naechsterTag(datum: string): string {
-  const tag = new Date(`${datum}T00:00:00Z`);
-  tag.setUTCDate(tag.getUTCDate() + 1);
-  return tag.toISOString().slice(0, 10);
 }

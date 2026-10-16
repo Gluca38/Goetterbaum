@@ -81,7 +81,7 @@ Der Preis pro Stunde einer Tätigkeit. Gilt standardmäßig für alle Kunden und
 _Avoid_: Stundenpreis, Verrechnungssatz
 
 **Rundungsregel**:
-Wie erfasste Minuten für die Stundenabrechnung gerundet werden, z. B. minutengenau oder auf angefangene 15 Minuten. Die Firma legt einen Standard fest, der je Kunde abweichen kann. Gerundet wird die Summe je Objekt und Tag.
+Wie erfasste Minuten für die Stundenabrechnung gerundet werden, z. B. minutengenau oder auf angefangene 15 Minuten. Die Firma legt einen Standard fest, der je Kunde abweichen kann. Gerundet wird die Summe je Objekt, Tätigkeit (bzw. Zusatzauftrag) und Kalendertag.
 _Avoid_: Taktung, Abrechnungstakt
 
 **Stundennachweis**:
