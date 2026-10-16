@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { erwarteAngemeldet, feld, meldeAn, testdaten } from "./testumgebung/hilfen";
-import { dienstZugang } from "./testumgebung/testdaten";
+import { dienstZugang, legeKundeMitObjektAn } from "./testumgebung/testdaten";
 
 // Die Beschriftung eines Auswahlfelds enthält auch den gewählten Wert,
 // deshalb nur der Anfang.
@@ -137,6 +137,11 @@ test("Archivierte Kunden und Objekte verschwinden aus der Auswahl und lassen sic
   await expect(page.getByRole("button", { name: "Archivieren" })).toBeVisible();
   expect((await objektAusDatenbank(objekt))?.archiviert).toBe(false);
 
+  // Ein einzelnes Objekt lässt sich auch direkt archivieren.
+  await page.getByRole("button", { name: "Archivieren" }).click();
+  await expect(page.getByText("Dieses Objekt ist archiviert.", { exact: false })).toBeVisible();
+  expect((await objektAusDatenbank(objekt))?.archiviert).toBe(true);
+
   // Nirgends gibt es einen Knopf zum Löschen.
   await expect(page.getByRole("button", { name: /Löschen/i })).toHaveCount(0);
 });
@@ -146,13 +151,24 @@ for (const rolle of ["mitarbeiter", "vorarbeiter"] as const) {
     page,
   }) => {
     const daten = testdaten();
+    const { kundeId, objektId } = await legeKundeMitObjektAn(
+      dienstZugang()!,
+      daten.firmaA.id,
+    );
 
     await meldeAn(page, daten.firmaA[rolle]);
     await erwarteAngemeldet(page, daten.firmaA[rolle].name);
     await expect(page.getByRole("link", { name: "Kunden verwalten" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Objekte verwalten" })).toHaveCount(0);
 
-    for (const pfad of ["/kunden", "/kunden/neu", "/objekte", "/objekte/neu"]) {
+    for (const pfad of [
+      "/kunden",
+      "/kunden/neu",
+      `/kunden/${kundeId}`,
+      "/objekte",
+      "/objekte/neu",
+      `/objekte/${objektId}`,
+    ]) {
       await page.goto(pfad);
       await expect(
         page.getByText("Kunden und Objekte verwalten darf nur das Büro."),

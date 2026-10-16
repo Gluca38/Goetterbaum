@@ -119,3 +119,37 @@ export function ladeTestdaten(): Testdaten | null {
   const roh = process.env[UMGEBUNGSVARIABLE];
   return roh ? (JSON.parse(roh) as Testdaten) : null;
 }
+
+const TEST_ADRESSE = { strasse: "Ringstraße 1", plz: "50667", ort: "Köln" };
+
+// Legt einen Kunden mit einem Pauschal-Objekt an, ohne über die App zu
+// gehen.
+export async function legeKundeMitObjektAn(supabase: SupabaseClient, firmaId: string) {
+  const { data: kunde, error } = await supabase
+    .from("kunde")
+    .insert({
+      firma_id: firmaId,
+      name: `Kunde ${randomUUID().slice(0, 8)}`,
+      ...TEST_ADRESSE,
+      abrechnungszeitraum: "monatlich",
+    })
+    .select("id")
+    .single<{ id: string }>();
+  if (error) throw error;
+
+  const { data: objekt, error: fehler } = await supabase
+    .from("objekt")
+    .insert({
+      firma_id: firmaId,
+      kunde_id: kunde.id,
+      bezeichnung: `Objekt ${randomUUID().slice(0, 8)}`,
+      ...TEST_ADRESSE,
+      abrechnungsart: "pauschale",
+      pauschale_cent: 50000,
+    })
+    .select("id")
+    .single<{ id: string }>();
+  if (fehler) throw fehler;
+
+  return { kundeId: kunde.id, objektId: objekt.id };
+}

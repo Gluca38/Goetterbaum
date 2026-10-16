@@ -14,7 +14,7 @@ export default function NeuesObjekt({ searchParams }: PageProps<"/objekte/neu">)
       <main className={styles.main}>
         <h1>{texte.objekte.neu}</h1>
         <Suspense fallback={<p>{texte.objekte.laedt}</p>}>
-          <NurFuerBuero keineBerechtigung={texte.kunden.keineBerechtigung}>
+          <NurFuerBuero keineBerechtigung={texte.stammdaten.keineBerechtigung}>
             {() => (
               <Anlegen
                 kundeId={searchParams.then((s) =>

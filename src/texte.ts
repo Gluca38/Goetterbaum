@@ -113,7 +113,6 @@ export const texte = {
   kunden: {
     titel: "Kunden",
     laedt: "Lädt …",
-    keineBerechtigung: "Kunden und Objekte verwalten darf nur das Büro.",
     neu: "Neuer Kunde",
     zurUebersicht: "Zurück zu den Kunden",
     zumKunden: "Zurück zum Kunden",
@@ -172,6 +171,7 @@ export const texte = {
       "Der Kunde dieses Objekts ist archiviert. Aktiviere zuerst den Kunden.",
   },
   stammdaten: {
+    keineBerechtigung: "Kunden und Objekte verwalten darf nur das Büro.",
     archivieren: "Archivieren",
     aktivieren: "Wieder aktivieren",
     archiviert: "archiviert",

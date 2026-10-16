@@ -35,21 +35,22 @@ export async function kundeSpeichern(
   formData: FormData,
 ): Promise<Rueckmeldung> {
   const { supabase } = await alsBuero();
+  // Über den eigenen Zugang geladen: Kunden fremder Firmen findet die
+  // Datenbank gar nicht erst.
+  const bestand = await ladeKunde(supabase, id);
+  if (!bestand) return FEHLER(texte.kunden.nichtGefunden);
+
   const eingabe = pruefeKundenEingabe(formData);
   if (!eingabe.ok) return FEHLER(eingabe.fehler);
 
-  // Kunden fremder Firmen findet die Datenbank gar nicht erst, dann wird
-  // nichts geändert.
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("kunde")
     .update(eingabe.daten)
-    .eq("id", id)
-    .select("id");
+    .eq("id", id);
   if (error) {
     console.error("Kunde speichern fehlgeschlagen", error);
     return FEHLER(texte.stammdaten.fehlerUnbekannt);
   }
-  if (data.length === 0) return FEHLER(texte.kunden.nichtGefunden);
 
   refresh();
   return OK(texte.stammdaten.gespeichert);

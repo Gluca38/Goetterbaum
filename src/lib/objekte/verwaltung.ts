@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { istId } from "@/lib/id";
 import type { ObjektDaten } from "./eingabe";
 
 export type Objekt = ObjektDaten & {
@@ -28,8 +29,7 @@ export async function ladeObjekt(
   supabase: SupabaseClient,
   id: string,
 ): Promise<Objekt | null> {
-  // Eine ungültige Kennung in der Adresse ist einfach "nicht gefunden".
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  if (!istId(id)) return null;
   const { data, error } = await supabase
     .from("objekt")
     .select(SPALTEN)

@@ -13,7 +13,7 @@ export default function ObjekteUebersicht() {
       <main className={styles.main}>
         <h1>{texte.objekte.titel}</h1>
         <Suspense fallback={<p>{texte.objekte.laedt}</p>}>
-          <NurFuerBuero keineBerechtigung={texte.kunden.keineBerechtigung}>
+          <NurFuerBuero keineBerechtigung={texte.stammdaten.keineBerechtigung}>
             {() => <Liste />}
           </NurFuerBuero>
         </Suspense>

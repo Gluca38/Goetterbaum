@@ -17,7 +17,7 @@ export default function ObjektBearbeiten({ params }: PageProps<"/objekte/[id]">)
       <main className={styles.main}>
         <h1>{texte.objekte.titel}</h1>
         <Suspense fallback={<p>{texte.objekte.laedt}</p>}>
-          <NurFuerBuero keineBerechtigung={texte.kunden.keineBerechtigung}>
+          <NurFuerBuero keineBerechtigung={texte.stammdaten.keineBerechtigung}>
             {() => <Bearbeiten id={params.then((p) => p.id)} />}
           </NurFuerBuero>
         </Suspense>

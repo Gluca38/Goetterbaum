@@ -12,7 +12,7 @@ export default function KundenUebersicht() {
       <main className={styles.main}>
         <h1>{texte.kunden.titel}</h1>
         <Suspense fallback={<p>{texte.kunden.laedt}</p>}>
-          <NurFuerBuero keineBerechtigung={texte.kunden.keineBerechtigung}>
+          <NurFuerBuero keineBerechtigung={texte.stammdaten.keineBerechtigung}>
             {() => <Liste />}
           </NurFuerBuero>
         </Suspense>

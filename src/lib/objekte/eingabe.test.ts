@@ -84,3 +84,16 @@ test("Ohne Bezeichnung, Kunde oder Abrechnungsart kein Objekt", () => {
     pruefeObjektEingabe(formular({ ...PAUSCHAL_OBJEKT, abrechnungsart: "festpreis" })),
   ).toEqual({ ok: false, fehler: "Bitte wähle eine Abrechnungsart." });
 });
+
+test("Eine Pauschale über der Höchstgrenze wird verständlich abgelehnt", () => {
+  expect(
+    pruefeObjektEingabe(formular({ ...PAUSCHAL_OBJEKT, pauschale: "21.474.837,00" })),
+  ).toEqual({
+    ok: false,
+    fehler: "Die Pauschale ist kein gültiger Betrag. Beispiel: 1.250,00",
+  });
+  const hoechstbetrag = pruefeObjektEingabe(
+    formular({ ...PAUSCHAL_OBJEKT, pauschale: "21.474.836,47" }),
+  );
+  expect(hoechstbetrag.ok && hoechstbetrag.daten.pauschale_cent).toBe(2147483647);
+});

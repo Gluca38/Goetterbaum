@@ -93,11 +93,20 @@ create function privat.aktives_objekt_braucht_aktiven_kunden()
 returns trigger
 language plpgsql
 set search_path = ''
-as $$
+declare
+  kunde_archiviert boolean;
 begin
-  if not new.archiviert and exists (
-    select 1 from public.kunde k where k.id = new.kunde_id and k.archiviert
-  ) then
+  if new.archiviert then
+    return new;
+  end if;
+  -- "for share" sperrt den Kunden bis zum Ende dieser Änderung. So kann ihn
+  -- niemand gleichzeitig archivieren, ohne dass das neue Objekt mit
+  -- archiviert wird.
+  select k.archiviert into kunde_archiviert
+  from public.kunde k
+  where k.id = new.kunde_id
+  for share;
+  if kunde_archiviert then
     raise exception 'Ein aktives Objekt braucht einen aktiven Kunden.'
       using errcode = 'check_violation';
   end if;

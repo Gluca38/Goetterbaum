@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { istId } from "@/lib/id";
 import type { KundenDaten } from "./eingabe";
 
 export type Kunde = KundenDaten & { id: string; archiviert: boolean };
@@ -23,8 +24,7 @@ export async function ladeKunde(
   supabase: SupabaseClient,
   id: string,
 ): Promise<Kunde | null> {
-  // Eine ungültige Kennung in der Adresse ist einfach "nicht gefunden".
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  if (!istId(id)) return null;
   const { data, error } = await supabase
     .from("kunde")
     .select(SPALTEN)

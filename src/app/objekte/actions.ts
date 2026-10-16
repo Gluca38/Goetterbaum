@@ -13,7 +13,7 @@ import { texte } from "@/texte";
 
 // Prüft, dass der gewählte Kunde zur eigenen Firma gehört und ein Objekt
 // mit diesem Archiv-Status haben darf. Liefert die Fehlermeldung oder null.
-async function pruefeKunde(
+async function pruefeKundeFuerObjekt(
   supabase: SupabaseClient,
   kundeId: string,
   archiviert: boolean,
@@ -31,7 +31,7 @@ export async function objektAnlegen(
   const eingabe = pruefeObjektEingabe(formData);
   if (!eingabe.ok) return FEHLER(eingabe.fehler);
 
-  const regelverstoss = await pruefeKunde(supabase, eingabe.daten.kunde_id, false);
+  const regelverstoss = await pruefeKundeFuerObjekt(supabase, eingabe.daten.kunde_id, false);
   if (regelverstoss) return FEHLER(regelverstoss);
 
   const { data, error } = await supabase
@@ -59,7 +59,7 @@ export async function objektSpeichern(
   const eingabe = pruefeObjektEingabe(formData);
   if (!eingabe.ok) return FEHLER(eingabe.fehler);
 
-  const regelverstoss = await pruefeKunde(
+  const regelverstoss = await pruefeKundeFuerObjekt(
     supabase,
     eingabe.daten.kunde_id,
     bestand.archiviert,
