@@ -37,7 +37,8 @@ jobs:
           STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
 
   e2e-tests:
-    name: E2E-Tests (Vercel-Preview + Supabase-Staging)
+    # Name muss "E2E-Tests" bleiben: Pflicht-Prüfung in den Regeln für main
+    name: E2E-Tests
     needs: staging-migrationen
     runs-on: ubuntu-latest
     concurrency:
