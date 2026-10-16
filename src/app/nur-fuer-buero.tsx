@@ -10,9 +10,12 @@ import { texte } from "@/texte";
 // Zeigt den Inhalt nur Büro-Nutzern. Das ist Bedienkomfort; geschützt
 // sind die Daten durch die Zugriffsregeln der Datenbank und die Prüfung
 // in jeder Aktion.
+// keineBerechtigung ist der Hinweis für alle anderen Rollen.
 export async function NurFuerBuero({
+  keineBerechtigung,
   children,
 }: {
+  keineBerechtigung: string;
   children: (ich: AngemeldeterMitarbeiter) => ReactNode;
 }) {
   const ich = await angemeldeterMitarbeiter();
@@ -21,9 +24,9 @@ export async function NurFuerBuero({
   if (ich.rolle !== "buero") {
     return (
       <>
-        <p>{texte.mitarbeiter.keineBerechtigung}</p>
+        <p>{keineBerechtigung}</p>
         <p>
-          <Link href="/">{texte.mitarbeiter.zurStartseite}</Link>
+          <Link href="/">{texte.stammdaten.zurStartseite}</Link>
         </p>
       </>
     );

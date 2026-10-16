@@ -6,9 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { texte } from "@/texte";
 import styles from "../../page.module.css";
 import { aktivSetzen, einladen, speichern } from "../actions";
-import { AktionsKnopf } from "../aktions-knopf";
+import { AktionsKnopf } from "@/app/aktions-knopf";
 import { MitarbeiterFormular } from "../mitarbeiter-formular";
-import { NurFuerBuero } from "../nur-fuer-buero";
+import { NurFuerBuero } from "@/app/nur-fuer-buero";
 
 export default function MitarbeiterBearbeiten({
   params,
@@ -18,7 +18,7 @@ export default function MitarbeiterBearbeiten({
       <main className={styles.main}>
         <h1>{texte.mitarbeiter.titel}</h1>
         <Suspense fallback={<p>{texte.mitarbeiter.laedt}</p>}>
-          <NurFuerBuero>
+          <NurFuerBuero keineBerechtigung={texte.mitarbeiter.keineBerechtigung}>
             {() => <Bearbeiten id={params.then((p) => p.id)} />}
           </NurFuerBuero>
         </Suspense>
