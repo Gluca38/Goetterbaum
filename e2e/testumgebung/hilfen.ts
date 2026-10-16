@@ -33,3 +33,9 @@ export async function schnittstelleAls(zugang: TestZugang) {
   if (error) throw error;
   return supabase;
 }
+
+// Die Fehlermeldung im Anmeldeformular. Next.js hat außerhalb davon ein
+// eigenes, leeres Hinweis-Element für Screenreader.
+export function anmeldeFehler(page: Page) {
+  return page.locator("form").getByRole("alert");
+}

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import {
+  anmeldeFehler,
   erwarteAnmeldeseite,
   meldeAn,
   schnittstelleAls,
@@ -66,7 +67,7 @@ test("Mit falschem Passwort ist keine Anmeldung möglich", async ({ page }) => {
 
   await meldeAn(page, { ...firmaA.buero, passwort: "falsches-passwort" });
 
-  await expect(page.getByRole("alert")).toHaveText(
+  await expect(anmeldeFehler(page)).toHaveText(
     "E-Mail oder Passwort ist falsch.",
   );
   await page.goto("/");
@@ -80,7 +81,7 @@ test("Ein deaktivierter Mitarbeiter kann sich nicht anmelden", async ({
 
   await meldeAn(page, firmaA.deaktiviert);
 
-  await expect(page.getByRole("alert")).toHaveText(
+  await expect(anmeldeFehler(page)).toHaveText(
     "Dieser Zugang ist deaktiviert. Bitte wende dich an das Büro.",
   );
   await page.goto("/");
