@@ -16,9 +16,28 @@ export function testdaten() {
 
 export async function meldeAn(page: Page, zugang: TestZugang) {
   await page.goto("/anmelden");
-  await page.getByLabel("E-Mail").fill(zugang.email);
-  await page.getByLabel("Passwort").fill(zugang.passwort);
+  await feld(page, "E-Mail").fill(zugang.email);
+  await feld(page, "Passwort").fill(zugang.passwort);
   await page.getByRole("button", { name: "Anmelden" }).click();
+}
+
+// Wartet, bis die Anmeldung durch ist. Erst danach darf ein Test per
+// page.goto weiterspringen, sonst bricht er die Anmeldung ab.
+export async function erwarteAngemeldet(page: Page, name: string) {
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByText(`Angemeldet als ${name}`)).toBeVisible();
+}
+
+export async function meldeAb(page: Page) {
+  await page.getByRole("button", { name: "Abmelden" }).click();
+  await erwarteAnmeldeseite(page);
+}
+
+// Ein Eingabefeld der gerade sichtbaren Seite. Next.js hält zuletzt
+// besuchte Seiten unsichtbar vorrätig (React Activity), deren Felder
+// würden sonst mitgefunden.
+export function feld(page: Page, beschriftung: string) {
+  return page.getByLabel(beschriftung, { exact: true }).filter({ visible: true });
 }
 
 export async function erwarteAnmeldeseite(page: Page) {
@@ -61,7 +80,7 @@ export async function legePasswortFest(page: Page, passwort: string) {
   await expect(
     page.getByRole("heading", { name: "Passwort festlegen" }),
   ).toBeVisible();
-  await page.getByLabel("Neues Passwort").fill(passwort);
-  await page.getByLabel("Passwort wiederholen").fill(passwort);
+  await feld(page, "Neues Passwort").fill(passwort);
+  await feld(page, "Passwort wiederholen").fill(passwort);
   await page.getByRole("button", { name: "Passwort speichern" }).click();
 }

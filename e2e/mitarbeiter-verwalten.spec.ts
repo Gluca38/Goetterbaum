@@ -2,14 +2,18 @@ import { randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import {
   anmeldeFehler,
-  erwarteAnmeldeseite,
+  erwarteAngemeldet,
+  feld,
   legePasswortFest,
   linkAusMail,
+  meldeAb,
   meldeAn,
   schnittstelleAls,
   testdaten,
 } from "./testumgebung/hilfen";
 import { dienstZugang, legeZugangAn, testEmail } from "./testumgebung/testdaten";
+
+const EMAIL_FELD = "E-Mail (optional, nötig für einen Zugang)";
 
 async function oeffneVerwaltung(page: Page) {
   await page.getByRole("link", { name: "Mitarbeiter verwalten" }).click();
@@ -21,9 +25,10 @@ async function legeMitarbeiterAn(
   { name, email, rolle }: { name: string; email: string; rolle: string },
 ) {
   await page.getByRole("link", { name: "Neuer Mitarbeiter" }).click();
-  await page.getByLabel("Name", { exact: true }).fill(name);
-  await page.getByLabel(/^E-Mail/).fill(email);
-  await page.getByLabel("Rolle").selectOption({ label: rolle });
+  await expect(page.getByRole("heading", { name: "Neuer Mitarbeiter" })).toBeVisible();
+  await feld(page, "Name").fill(name);
+  await feld(page, EMAIL_FELD).fill(email);
+  await feld(page, "Rolle").selectOption({ label: rolle });
   await page.getByRole("button", { name: "Anlegen" }).click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
 }
@@ -37,6 +42,7 @@ test("Büro lädt einen neuen Mitarbeiter ein, der sein Passwort festlegt und si
   const passwort = randomBytes(12).toString("base64url");
 
   await meldeAn(page, firmaA.buero);
+  await erwarteAngemeldet(page, firmaA.buero.name);
   await oeffneVerwaltung(page);
   await legeMitarbeiterAn(page, { name, email, rolle: "Mitarbeiter" });
   await expect(page.getByText("Zugang: Noch nicht eingeladen")).toBeVisible();
@@ -49,31 +55,31 @@ test("Büro lädt einen neuen Mitarbeiter ein, der sein Passwort festlegt und si
 
   // Die Einladung lässt sich erneut senden.
   await page.getByRole("button", { name: "Einladung erneut senden" }).click();
+  await expect(page.getByRole("button", { name: "Einladung erneut senden" })).toBeEnabled();
   await expect(page.getByRole("status")).toHaveText(
     `Einladung an ${email} verschickt.`,
   );
 
   // Der neue Mitarbeiter öffnet den Link aus der Mail.
   await page.goto("/");
-  await page.getByRole("button", { name: "Abmelden" }).click();
-  await erwarteAnmeldeseite(page);
+  await meldeAb(page);
   await page.goto(await linkAusMail(email, "invite"));
   await legePasswortFest(page, passwort);
 
-  await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByText(`Angemeldet als ${name}`)).toBeVisible();
+  await erwarteAngemeldet(page, name);
   await expect(page.getByText("Rolle: Mitarbeiter")).toBeVisible();
 
   // Danach meldet er sich ganz normal mit seinem Passwort an.
-  await page.getByRole("button", { name: "Abmelden" }).click();
+  await meldeAb(page);
   await meldeAn(page, { id: "", name, email, passwort });
-  await expect(page.getByText(`Angemeldet als ${name}`)).toBeVisible();
+  await erwarteAngemeldet(page, name);
 });
 
 test("Ein Mitarbeiter ohne E-Mail wird ohne Zugang angelegt", async ({ page }) => {
   const { firmaA } = testdaten();
 
   await meldeAn(page, firmaA.buero);
+  await erwarteAngemeldet(page, firmaA.buero.name);
   await oeffneVerwaltung(page);
   await legeMitarbeiterAn(page, { name: "Otto Ohnemail", email: "", rolle: "Mitarbeiter" });
 
@@ -98,8 +104,9 @@ test("Rollenänderung und Deaktivierung wirken sofort, die Daten bleiben erhalte
   expect(await sichtbar()).toHaveLength(1);
 
   await meldeAn(page, firmaA.buero);
+  await erwarteAngemeldet(page, firmaA.buero.name);
   await page.goto(`/mitarbeiter/${rolf.id}`);
-  await page.getByLabel("Rolle").selectOption({ label: "Vorarbeiter" });
+  await feld(page, "Rolle").selectOption({ label: "Vorarbeiter" });
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(page.getByRole("status")).toHaveText("Gespeichert.");
 
@@ -114,7 +121,7 @@ test("Rollenänderung und Deaktivierung wirken sofort, die Daten bleiben erhalte
 
   // … eine neue Anmeldung scheitert …
   await page.goto("/");
-  await page.getByRole("button", { name: "Abmelden" }).click();
+  await meldeAb(page);
   await meldeAn(page, rolf);
   await expect(anmeldeFehler(page)).toHaveText(
     "Dieser Zugang ist deaktiviert. Bitte wende dich an das Büro.",
@@ -134,19 +141,21 @@ test("Rollenänderung und Deaktivierung wirken sofort, die Daten bleiben erhalte
 
   // Wieder aktiviert, kann er sich anmelden.
   await meldeAn(page, firmaA.buero);
+  await erwarteAngemeldet(page, firmaA.buero.name);
   await page.goto(`/mitarbeiter/${rolf.id}`);
   await page.getByRole("button", { name: "Aktivieren" }).click();
   await expect(page.getByText("Zugang: Eingeladen")).toBeVisible();
   await page.goto("/");
-  await page.getByRole("button", { name: "Abmelden" }).click();
+  await meldeAb(page);
   await meldeAn(page, rolf);
-  await expect(page.getByText(`Angemeldet als ${rolf.name}`)).toBeVisible();
+  await erwarteAngemeldet(page, rolf.name);
 });
 
 test("Das Büro kann sich nicht selbst deaktivieren", async ({ page }) => {
   const { firmaA } = testdaten();
 
   await meldeAn(page, firmaA.buero);
+  await erwarteAngemeldet(page, firmaA.buero.name);
   await page.goto(`/mitarbeiter/${firmaA.buero.id}`);
   await page.getByRole("button", { name: "Deaktivieren" }).click();
 
@@ -162,7 +171,7 @@ for (const rolle of ["mitarbeiter", "vorarbeiter"] as const) {
     const daten = testdaten();
 
     await meldeAn(page, daten.firmaA[rolle]);
-    await expect(page.getByText(`Angemeldet als ${daten.firmaA[rolle].name}`)).toBeVisible();
+    await erwarteAngemeldet(page, daten.firmaA[rolle].name);
     await expect(page.getByRole("link", { name: "Mitarbeiter verwalten" })).toHaveCount(0);
 
     for (const pfad of ["/mitarbeiter", "/mitarbeiter/neu", `/mitarbeiter/${daten.firmaA.buero.id}`]) {

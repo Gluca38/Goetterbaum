@@ -1,9 +1,12 @@
 import { randomBytes } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import {
+  erwarteAngemeldet,
   erwarteAnmeldeseite,
+  feld,
   legePasswortFest,
   linkAusMail,
+  meldeAb,
   meldeAn,
   testdaten,
 } from "./testumgebung/hilfen";
@@ -21,7 +24,8 @@ test("Wer sein Passwort vergessen hat, legt über den Link aus der Mail ein neue
 
   await page.goto("/anmelden");
   await page.getByRole("link", { name: "Passwort vergessen?" }).click();
-  await page.getByLabel("E-Mail").fill(paula.email);
+  await expect(page.getByRole("heading", { name: "Passwort vergessen" })).toBeVisible();
+  await feld(page, "E-Mail").fill(paula.email);
   await page.getByRole("button", { name: "Link anfordern" }).click();
   await expect(page.getByRole("status")).toContainText(
     "haben wir dir einen Link geschickt",
@@ -29,22 +33,22 @@ test("Wer sein Passwort vergessen hat, legt über den Link aus der Mail ein neue
 
   await page.goto(await linkAusMail(paula.email, "recovery"));
   await legePasswortFest(page, neuesPasswort);
-  await expect(page.getByText(`Angemeldet als ${paula.name}`)).toBeVisible();
+  await erwarteAngemeldet(page, paula.name);
 
   // Das alte Passwort gilt nicht mehr, das neue schon.
-  await page.getByRole("button", { name: "Abmelden" }).click();
+  await meldeAb(page);
   await meldeAn(page, paula);
   await expect(page.locator("form").getByRole("alert")).toHaveText(
     "E-Mail oder Passwort ist falsch.",
   );
   await meldeAn(page, { ...paula, passwort: neuesPasswort });
-  await expect(page.getByText(`Angemeldet als ${paula.name}`)).toBeVisible();
+  await erwarteAngemeldet(page, paula.name);
 });
 
 test("Für unbekannte Adressen sieht die Antwort genauso aus", async ({ page }) => {
   await page.goto("/passwort-vergessen");
   // Diese Adresse hat keinen Zugang, Supabase verschickt also nichts.
-  await page.getByLabel("E-Mail").fill("delivered+e2e-unbekannt@resend.dev");
+  await feld(page, "E-Mail").fill("delivered+e2e-unbekannt@resend.dev");
   await page.getByRole("button", { name: "Link anfordern" }).click();
   await expect(page.getByRole("status")).toContainText(
     "haben wir dir einen Link geschickt",
@@ -53,7 +57,8 @@ test("Für unbekannte Adressen sieht die Antwort genauso aus", async ({ page }) 
 
 test("Ein ungültiger Link führt mit Hinweis zur Anmeldung", async ({ page }) => {
   await page.goto("/auth/bestaetigen?token_hash=ungueltig&type=recovery");
-  await erwarteAnmeldeseite(page);
+  await expect(page).toHaveURL(/\/anmelden\?fehler=link$/);
+  await expect(page.getByRole("heading", { name: "Anmelden" })).toBeVisible();
   await expect(page.getByText("Dieser Link ist ungültig oder abgelaufen.", { exact: false })).toBeVisible();
 });
 
