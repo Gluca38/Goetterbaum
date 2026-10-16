@@ -1,0 +1,71 @@
+name: E2E-Tests
+
+# Vercel meldet GitHub, wenn eine Preview fertig gebaut ist. Erst dann
+# laufen die Browsertests, und zwar gegen genau diese Preview, die mit
+# Supabase-Staging verbunden ist. Die Produktionsdatenbank wird nie berührt.
+on: deployment_status
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  staging-migrationen:
+    name: Migrationen auf Staging
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      startsWith(github.event.deployment.environment, 'Preview')
+    runs-on: ubuntu-latest
+    # Nie zwei Läufe gleichzeitig an der Staging-Datenbank bauen lassen
+    concurrency:
+      group: supabase-staging-migrationen
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.deployment.sha }}
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Wendet neue Dateien aus supabase/migrations auf Staging an
+      - run: npx supabase db push --include-all --db-url "$STAGING_DB_URL"
+        env:
+          STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
+
+  e2e-tests:
+    # Name muss "E2E-Tests" bleiben: Pflicht-Prüfung in den Regeln für main
+    name: E2E-Tests
+    needs: staging-migrationen
+    runs-on: ubuntu-latest
+    concurrency:
+      group: e2e-${{ github.event.deployment.sha }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.deployment.sha }}
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          E2E_BASE_URL: ${{ github.event.deployment_status.target_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
+          # Nur das Test-Setup nutzt ihn, um Test-Firmen anzulegen und zu entfernen
+          SUPABASE_SECRET_KEY: ${{ secrets.STAGING_SUPABASE_SECRET_KEY }}
+      # Bei Fehlern den Playwright-Bericht zum Herunterladen bereitstellen
+      - uses: actions/upload-artifact@v7.0.2
+        if: ${{ failure() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

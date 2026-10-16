@@ -1,0 +1,33 @@
+name: Migrationen auf Produktion
+
+# Nach dem Zusammenführen in main werden neue Migrationen auf die
+# Produktionsdatenbank angewendet. Es wird nur der Bauplan (Tabellen,
+# Zugriffsregeln) übertragen, niemals Daten.
+on:
+  push:
+    branches: [main]
+    paths: ["supabase/migrations/**"]
+  # Erlaubt zusätzlich einen Start per Knopfdruck unter "Actions"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-produktion-migrationen
+  cancel-in-progress: false
+
+jobs:
+  migrationen:
+    name: Migrationen auf Produktion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx supabase db push --db-url "$PRODUCTION_DB_URL"
+        env:
+          PRODUCTION_DB_URL: ${{ secrets.PRODUCTION_DB_URL }}
