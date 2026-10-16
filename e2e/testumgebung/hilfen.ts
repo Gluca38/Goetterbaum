@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ladeTestdaten, oeffentlicherZugang, type TestZugang } from "./testdaten";
+import {
+  dienstZugang,
+  ladeTestdaten,
+  oeffentlicherZugang,
+  type TestZugang,
+} from "./testdaten";
 
 // Die Testdaten aus dem Setup. Fehlen sie (nur lokal ohne geheimen
 // Schlüssel möglich), wird der Test übersprungen.
@@ -11,9 +16,28 @@ export function testdaten() {
 
 export async function meldeAn(page: Page, zugang: TestZugang) {
   await page.goto("/anmelden");
-  await page.getByLabel("E-Mail").fill(zugang.email);
-  await page.getByLabel("Passwort").fill(zugang.passwort);
+  await feld(page, "E-Mail").fill(zugang.email);
+  await feld(page, "Passwort").fill(zugang.passwort);
   await page.getByRole("button", { name: "Anmelden" }).click();
+}
+
+// Wartet, bis die Anmeldung durch ist. Erst danach darf ein Test per
+// page.goto weiterspringen, sonst bricht er die Anmeldung ab.
+export async function erwarteAngemeldet(page: Page, name: string) {
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByText(`Angemeldet als ${name}`)).toBeVisible();
+}
+
+export async function meldeAb(page: Page) {
+  await page.getByRole("button", { name: "Abmelden" }).click();
+  await erwarteAnmeldeseite(page);
+}
+
+// Ein Eingabefeld der gerade sichtbaren Seite. Next.js hält zuletzt
+// besuchte Seiten unsichtbar vorrätig (React Activity), deren Felder
+// würden sonst mitgefunden.
+export function feld(page: Page, beschriftung: string) {
+  return page.getByLabel(beschriftung, { exact: true }).filter({ visible: true });
 }
 
 export async function erwarteAnmeldeseite(page: Page) {
@@ -38,4 +62,25 @@ export async function schnittstelleAls(zugang: TestZugang) {
 // eigenes, leeres Hinweis-Element für Screenreader.
 export function anmeldeFehler(page: Page) {
   return page.locator("form").getByRole("alert");
+}
+
+// Der Link, den Supabase in die Einladungs- bzw. "Passwort vergessen"-Mail
+// schreiben würde. Die Tests lesen keine Postfächer, sondern lassen sich
+// über den Dienstschlüssel einen gleichwertigen, frischen Link erzeugen.
+export async function linkAusMail(email: string, typ: "invite" | "recovery") {
+  const { data, error } = await dienstZugang()!.auth.admin.generateLink({
+    type: typ,
+    email,
+  });
+  if (error) throw error;
+  return `/auth/bestaetigen?token_hash=${data.properties.hashed_token}&type=${typ}`;
+}
+
+export async function legePasswortFest(page: Page, passwort: string) {
+  await expect(
+    page.getByRole("heading", { name: "Passwort festlegen" }),
+  ).toBeVisible();
+  await feld(page, "Neues Passwort").fill(passwort);
+  await feld(page, "Passwort wiederholen").fill(passwort);
+  await page.getByRole("button", { name: "Passwort speichern" }).click();
 }

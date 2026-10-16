@@ -1,10 +1,10 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   dienstZugang,
+  legeZugangAn,
   speichereTestdaten,
   TEST_FIRMA_PRAEFIX,
-  type TestZugang,
 } from "./testdaten";
 
 // Legt vor allen Browsertests zwei eigene Test-Firmen mit Zugängen auf
@@ -32,21 +32,23 @@ export default async function setup() {
   speichereTestdaten({
     firmaA: {
       ...firmaA,
-      buero: await legeZugangAn(supabase, firmaA.id, kennung, {
-        name: "Anna Büro",
-        aktiv: true,
-      }),
-      deaktiviert: await legeZugangAn(supabase, firmaA.id, kennung, {
+      buero: await legeZugangAn(supabase, firmaA.id, { name: "Anna Büro" }),
+      deaktiviert: await legeZugangAn(supabase, firmaA.id, {
         name: "Dieter Deaktiviert",
         aktiv: false,
+      }),
+      mitarbeiter: await legeZugangAn(supabase, firmaA.id, {
+        name: "Mia Mitarbeiter",
+        rolle: "mitarbeiter",
+      }),
+      vorarbeiter: await legeZugangAn(supabase, firmaA.id, {
+        name: "Volker Vorarbeiter",
+        rolle: "vorarbeiter",
       }),
     },
     firmaB: {
       ...firmaB,
-      buero: await legeZugangAn(supabase, firmaB.id, kennung, {
-        name: "Bert Büro",
-        aktiv: true,
-      }),
+      buero: await legeZugangAn(supabase, firmaB.id, { name: "Bert Büro" }),
     },
   });
 }
@@ -59,38 +61,4 @@ async function legeFirmaAn(supabase: SupabaseClient, name: string) {
     .single<{ id: string; name: string }>();
   if (error) throw error;
   return data;
-}
-
-async function legeZugangAn(
-  supabase: SupabaseClient,
-  firmaId: string,
-  kennung: string,
-  { name, aktiv }: { name: string; aktiv: boolean },
-): Promise<TestZugang> {
-  const email = `e2e-${kennung}-${randomUUID().slice(0, 8)}@example.com`;
-  const passwort = randomBytes(18).toString("base64url");
-
-  const { data, error } = await supabase.auth.admin.createUser({
-    email,
-    password: passwort,
-    email_confirm: true,
-  });
-  if (error) throw error;
-
-  const { error: fehler } = await supabase.from("mitarbeiter").insert({
-    firma_id: firmaId,
-    name,
-    email,
-    rolle: "buero",
-    aktiv,
-    auth_user_id: data.user.id,
-  });
-  if (fehler) {
-    // Sonst bliebe ein Login ohne Mitarbeiter zurück, den das Aufräumen
-    // nicht mehr findet.
-    await supabase.auth.admin.deleteUser(data.user.id);
-    throw fehler;
-  }
-
-  return { name, email, passwort };
 }
