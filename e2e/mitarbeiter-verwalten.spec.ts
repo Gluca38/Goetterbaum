@@ -15,6 +15,13 @@ import { dienstZugang, legeZugangAn, testEmail } from "./testumgebung/testdaten"
 
 const EMAIL_FELD = "E-Mail (optional, nötig für einen Zugang)";
 
+// Die Beschriftung eines Auswahlfelds enthält auch den gewählten Wert
+// („Rolle Mitarbeiter“), deshalb nur der Anfang. getByRole übergeht die
+// unsichtbar vorrätig gehaltenen Seiten von selbst.
+function rollenAuswahl(page: Page) {
+  return page.getByRole("combobox", { name: /^Rolle/ });
+}
+
 async function oeffneVerwaltung(page: Page) {
   await page.getByRole("link", { name: "Mitarbeiter verwalten" }).click();
   await expect(page.getByRole("heading", { name: "Mitarbeiter", exact: true })).toBeVisible();
@@ -28,7 +35,7 @@ async function legeMitarbeiterAn(
   await expect(page.getByRole("heading", { name: "Neuer Mitarbeiter" })).toBeVisible();
   await feld(page, "Name").fill(name);
   await feld(page, EMAIL_FELD).fill(email);
-  await feld(page, "Rolle").selectOption({ label: rolle });
+  await rollenAuswahl(page).selectOption({ label: rolle });
   await page.getByRole("button", { name: "Anlegen" }).click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
 }
@@ -106,7 +113,7 @@ test("Rollenänderung und Deaktivierung wirken sofort, die Daten bleiben erhalte
   await meldeAn(page, firmaA.buero);
   await erwarteAngemeldet(page, firmaA.buero.name);
   await page.goto(`/mitarbeiter/${rolf.id}`);
-  await feld(page, "Rolle").selectOption({ label: "Vorarbeiter" });
+  await rollenAuswahl(page).selectOption({ label: "Vorarbeiter" });
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(page.getByRole("status")).toHaveText("Gespeichert.");
 
