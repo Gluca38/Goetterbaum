@@ -23,3 +23,17 @@ Erstes Kernfeature ist die objektbezogene Zeiterfassung der Mitarbeiter vor Ort,
 - Neue Pakete hinzufügen
 - Login, Rechte oder Datenbankschema ändern
 - Tests löschen oder abschwächen- Passwörter oder Schlüssel in den Code schreiben (nur Umgebungsvariablen)
+
+## Agent skills
+
+### Issue tracker
+
+Tickets liegen als GitHub Issues im Repo Gluca38/Goetterbaum (über die `gh`-CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Die fünf Standard-Labels: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: ein `GLOSSARY.md` und `docs/adr/` im Hauptordner. See `docs/agents/domain.md`.
