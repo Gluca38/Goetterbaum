@@ -28,7 +28,7 @@ Erstes Kernfeature ist die objektbezogene Zeiterfassung der Mitarbeiter vor Ort,
 
 ### Issue tracker
 
-Tickets liegen als GitHub Issues im Repo Gluca38/Goetterbaum (über die `gh`-CLI). See `docs/agents/issue-tracker.md`.
+Tickets liegen als GitHub Issues im Repo goetterbaum/Goetterbaum (über die `gh`-CLI). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
