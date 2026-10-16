@@ -93,6 +93,7 @@ create function privat.aktives_objekt_braucht_aktiven_kunden()
 returns trigger
 language plpgsql
 set search_path = ''
+as $$
 declare
   kunde_archiviert boolean;
 begin
