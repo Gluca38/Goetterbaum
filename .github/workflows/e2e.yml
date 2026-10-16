@@ -32,11 +32,10 @@ jobs:
       - name: Neue Migrationen stehen in begin; … commit;
         run: bash scripts/pruefe-migrationen.sh
       # Startet eine frische Supabase-Datenbank (Docker) und spielt dort
-      # alle Migrationen ein, auf demselben Weg wie danach auf Staging
-      - name: Wegwerf-Datenbank starten
+      # alle Migrationen ein (db start macht beides), auf demselben Weg wie
+      # danach auf Staging
+      - name: Alle Migrationen auf einer Wegwerf-Datenbank einspielen
         run: npx supabase db start
-      - name: Alle Migrationen auf der Wegwerf-Datenbank einspielen
-        run: npx supabase db push --local --include-all
 
   staging-migrationen:
     name: Migrationen auf Staging

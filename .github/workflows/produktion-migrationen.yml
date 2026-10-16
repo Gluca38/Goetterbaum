@@ -32,10 +32,8 @@ jobs:
       - run: npm ci
       - name: Neue Migrationen stehen in begin; … commit;
         run: bash scripts/pruefe-migrationen.sh
-      - name: Wegwerf-Datenbank starten
+      - name: Alle Migrationen auf einer Wegwerf-Datenbank einspielen
         run: npx supabase db start
-      - name: Alle Migrationen auf der Wegwerf-Datenbank einspielen
-        run: npx supabase db push --local --include-all
 
   migrationen:
     name: Migrationen auf Produktion
