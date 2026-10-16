@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Rolle } from "@/lib/rollen";
 import { createClient } from "@/lib/supabase/server";
 
-export type Rolle = "mitarbeiter" | "vorarbeiter" | "buero";
-
 export type AngemeldeterMitarbeiter = {
+  id: string;
+  firma_id: string;
   name: string;
   rolle: Rolle;
 };
@@ -24,7 +25,7 @@ export async function angemeldeterMitarbeiter(
 
   const { data, error } = await supabase
     .from("mitarbeiter")
-    .select("name, rolle")
+    .select("id, firma_id, name, rolle")
     .eq("auth_user_id", authUserId)
     .maybeSingle<AngemeldeterMitarbeiter>();
 

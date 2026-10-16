@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { angemeldeterMitarbeiter } from "@/lib/angemeldeter-mitarbeiter";
@@ -30,6 +31,11 @@ async function Begruessung() {
       <p>
         {texte.start.rolle}: <strong>{texte.rollen[mitarbeiter.rolle]}</strong>
       </p>
+      {mitarbeiter.rolle === "buero" && (
+        <p>
+          <Link href="/mitarbeiter">{texte.start.mitarbeiterVerwalten}</Link>
+        </p>
+      )}
       <form action={abmelden}>
         <button type="submit">{texte.start.abmelden}</button>
       </form>

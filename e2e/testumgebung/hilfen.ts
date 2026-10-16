@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ladeTestdaten, oeffentlicherZugang, type TestZugang } from "./testdaten";
+import {
+  dienstZugang,
+  ladeTestdaten,
+  oeffentlicherZugang,
+  type TestZugang,
+} from "./testdaten";
 
 // Die Testdaten aus dem Setup. Fehlen sie (nur lokal ohne geheimen
 // Schlüssel möglich), wird der Test übersprungen.
@@ -38,4 +43,25 @@ export async function schnittstelleAls(zugang: TestZugang) {
 // eigenes, leeres Hinweis-Element für Screenreader.
 export function anmeldeFehler(page: Page) {
   return page.locator("form").getByRole("alert");
+}
+
+// Der Link, den Supabase in die Einladungs- bzw. "Passwort vergessen"-Mail
+// schreiben würde. Die Tests lesen keine Postfächer, sondern lassen sich
+// über den Dienstschlüssel einen gleichwertigen, frischen Link erzeugen.
+export async function linkAusMail(email: string, typ: "invite" | "recovery") {
+  const { data, error } = await dienstZugang()!.auth.admin.generateLink({
+    type: typ,
+    email,
+  });
+  if (error) throw error;
+  return `/auth/bestaetigen?token_hash=${data.properties.hashed_token}&type=${typ}`;
+}
+
+export async function legePasswortFest(page: Page, passwort: string) {
+  await expect(
+    page.getByRole("heading", { name: "Passwort festlegen" }),
+  ).toBeVisible();
+  await page.getByLabel("Neues Passwort").fill(passwort);
+  await page.getByLabel("Passwort wiederholen").fill(passwort);
+  await page.getByRole("button", { name: "Passwort speichern" }).click();
 }

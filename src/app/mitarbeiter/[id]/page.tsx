@@ -1,0 +1,96 @@
+import Link from "next/link";
+import { Suspense } from "react";
+import { zugangsStatus } from "@/lib/mitarbeiter/regeln";
+import { ladeMitarbeiter } from "@/lib/mitarbeiter/verwaltung";
+import { createClient } from "@/lib/supabase/server";
+import { texte } from "@/texte";
+import styles from "../../page.module.css";
+import { aktivSetzen, einladen, speichern } from "../actions";
+import { AktionsKnopf } from "../aktions-knopf";
+import { MitarbeiterFormular } from "../mitarbeiter-formular";
+import { NurFuerBuero } from "../nur-fuer-buero";
+
+export default function MitarbeiterBearbeiten({
+  params,
+}: PageProps<"/mitarbeiter/[id]">) {
+  return (
+    <div className={styles.page}>
+      <main className={styles.main}>
+        <h1>{texte.mitarbeiter.titel}</h1>
+        <Suspense fallback={<p>{texte.mitarbeiter.laedt}</p>}>
+          <NurFuerBuero>
+            {() => <Bearbeiten id={params.then((p) => p.id)} />}
+          </NurFuerBuero>
+        </Suspense>
+      </main>
+    </div>
+  );
+}
+
+async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
+  const id = await idVersprechen;
+  const mitarbeiter = await ladeMitarbeiter(await createClient(), id);
+
+  if (!mitarbeiter) {
+    return (
+      <>
+        <p>{texte.mitarbeiter.nichtGefunden}</p>
+        <ZurUebersicht />
+      </>
+    );
+  }
+
+  const einladbar = mitarbeiter.aktiv && mitarbeiter.email;
+
+  return (
+    <>
+      <h2>{mitarbeiter.name}</h2>
+      <p>
+        {texte.mitarbeiter.zugang}: <strong>{zugangsStatus(mitarbeiter)}</strong>
+      </p>
+
+      <MitarbeiterFormular
+        aktion={speichern.bind(null, mitarbeiter.id)}
+        vorgabe={mitarbeiter}
+        knopf={texte.mitarbeiter.speichern}
+        knopfLaeuft={texte.mitarbeiter.speichernLaeuft}
+      />
+
+      {einladbar && (
+        <AktionsKnopf
+          aktion={einladen.bind(null, mitarbeiter.id)}
+          knopf={
+            mitarbeiter.hatZugang
+              ? texte.mitarbeiter.einladung.erneutSenden
+              : texte.mitarbeiter.einladung.senden
+          }
+          knopfLaeuft={texte.mitarbeiter.einladung.laeuft}
+        />
+      )}
+
+      <p>{texte.mitarbeiter.deaktiviertHinweis}</p>
+      {/* Neuer Knopf nach jedem Wechsel, damit keine alte Meldung stehen
+          bleibt. */}
+      <AktionsKnopf
+        key={String(mitarbeiter.aktiv)}
+        aktion={aktivSetzen.bind(null, mitarbeiter.id, !mitarbeiter.aktiv)}
+        knopf={
+          mitarbeiter.aktiv
+            ? texte.mitarbeiter.deaktivieren
+            : texte.mitarbeiter.aktivieren
+        }
+        knopfLaeuft={texte.mitarbeiter.speichernLaeuft}
+      />
+
+      <ZurUebersicht />
+    </>
+  );
+}
+
+function ZurUebersicht() {
+  return (
+    <p>
+      <Link href="/mitarbeiter">{texte.mitarbeiter.zurUebersicht}</Link>
+    </p>
+  );
+}

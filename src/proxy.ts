@@ -2,8 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseUmgebung } from "@/lib/supabase/umgebung";
 
-// Seiten, die ohne Anmeldung erreichbar sind.
-const OEFFENTLICHE_PFADE = ["/anmelden"];
+// Seiten, die ohne Anmeldung erreichbar sind. /auth/bestaetigen ist das
+// Ziel der Links aus Einladungs- und "Passwort vergessen"-Mails.
+const OEFFENTLICHE_PFADE = [
+  "/anmelden",
+  "/passwort-vergessen",
+  "/auth/bestaetigen",
+];
 
 // Läuft vor jeder Seite: erneuert die Sitzung und schickt Besucher ohne
 // Anmeldung zur Anmeldeseite. Die eigentliche Sicherheit liegt in den
