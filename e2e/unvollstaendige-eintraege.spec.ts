@@ -62,7 +62,7 @@ test.describe("am Handy", () => {
 
     await meldeAn(page, ich);
     await erwarteAngemeldet(page, ich.name);
-    await expect(page.getByRole("heading", { name: "Unvollständig" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Unvollständig", exact: true })).toBeVisible();
     await expect(
       page.getByText("läuft seit mehr als 12 Stunden").filter({ visible: true }),
     ).toBeVisible();
@@ -83,8 +83,8 @@ test.describe("am Handy", () => {
     await feld(page, "Bis").fill(berlinerUhrzeit(ende));
     await page.getByRole("button", { name: "Ende speichern" }).click();
 
-    await expect(page.getByRole("heading", { name: "Unvollständig" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Unvollständig", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Start", exact: true })).toBeVisible();
     const eintrag = page.getByRole("listitem").filter({ hasText: objekt.bezeichnung });
     await expect(eintrag).toContainText(`–${berlinerUhrzeit(ende)}`);
     await expect(eintrag).toContainText("Nachtrag");
@@ -103,7 +103,7 @@ test.describe("am Handy", () => {
     await meldeAn(page, ich);
     await erwarteAngemeldet(page, ich.name);
     await expect(page.getByRole("button", { name: "Stopp" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Unvollständig" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Unvollständig", exact: true })).toHaveCount(0);
   });
 
   test("Wird der Eintrag unvollständig, während die Seite offen ist, speichert der Stopp nichts", async ({
@@ -126,7 +126,7 @@ test.describe("am Handy", () => {
     // Die Seite lädt neu und zeigt statt des Stopps das Formular für das
     // richtige Ende.
     await page.getByRole("button", { name: "Stopp" }).click();
-    await expect(page.getByRole("heading", { name: "Unvollständig" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Unvollständig", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Stopp" })).toHaveCount(0);
     expect(await gespeicherterEintrag(id)).toMatchObject({ ende: null, nachtrag: false });
   });
