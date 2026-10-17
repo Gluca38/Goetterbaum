@@ -43,10 +43,6 @@ export type GeladeneRechnungsvorbereitung = {
   // Noch nicht freigegebene Zeiteinträge des Kunden, die im Zeitraum
   // beginnen; sie fehlen im Ergebnis.
   nichtFreigegeben: number;
-  // Einfließende Zeiteinträge, die vor dem Zeitraum beginnen. Was schon
-  // abgerechnet ist, lässt sich noch nicht markieren (#16); das Büro
-  // prüft sie deshalb selbst.
-  ausFrueherenZeitraeumen: number;
 };
 
 // Dazu Kunde und Zeitraum, wie sie aus der Adresszeile gewählt wurden.
@@ -82,7 +78,7 @@ export async function ladeRechnungsvorbereitung(
 
   const objektIds = objekte.data.map((o) => o.id);
   const [zeiteintraege, nichtFreigegeben] = await Promise.all([
-    ladeFreigegebeneZeiteintraege(supabase, objektIds, zeitraum.bisVor),
+    ladeFreigegebeneZeiteintraege(supabase, objektIds, zeitraum),
     zaehleNichtFreigegebene(supabase, objektIds, zeitraum),
   ]);
 
@@ -119,9 +115,6 @@ export async function ladeRechnungsvorbereitung(
     abgerechnetePauschalMonate: [],
   });
 
-  const vorDemZeitraum = new Set(
-    zeiteintraege.filter((z) => Date.parse(z.beginn) < Date.parse(zeitraum.ab)).map((z) => z.id),
-  );
   return {
     ergebnis,
     namen: {
@@ -130,17 +123,18 @@ export async function ladeRechnungsvorbereitung(
     },
     rundungsregel,
     nichtFreigegeben,
-    ausFrueherenZeitraeumen: ergebnis.zeiteintragIds.filter((id) => vorDemZeitraum.has(id)).length,
   };
 }
 
-// Alle freigegebenen Zeiteinträge in den Objekten, die vor dem Ende des
-// Zeitraums beginnen. Was davon in welchen Zeitraum gehört, entscheidet
-// der Rechenbaustein.
+// Die freigegebenen Zeiteinträge in den Objekten, die im Zeitraum
+// beginnen. Frühere bleiben bewusst draußen: Solange sich Abgerechnetes
+// nicht markieren lässt (#16), würden sie sonst in jedem späteren Zeitraum
+// erneut berechnet. Ein spät freigegebener Eintrag erscheint deshalb nur,
+// wenn das Büro seinen Zeitraum noch einmal aufruft.
 async function ladeFreigegebeneZeiteintraege(
   supabase: SupabaseClient,
   objektIds: string[],
-  bisVor: string,
+  zeitraum: GewaehlterZeitraum,
 ): Promise<ZeiteintragZeile[]> {
   if (objektIds.length === 0) return [];
   const alle: ZeiteintragZeile[] = [];
@@ -150,7 +144,8 @@ async function ladeFreigegebeneZeiteintraege(
       .select("id, mitarbeiter_id, art, objekt_id, taetigkeit_id, beginn, ende")
       .in("objekt_id", objektIds)
       .not("freigegeben_am", "is", null)
-      .lt("beginn", bisVor)
+      .gte("beginn", zeitraum.ab)
+      .lt("beginn", zeitraum.bisVor)
       .order("id")
       .range(ab, ab + SEITE - 1)
       .returns<ZeiteintragZeile[]>();

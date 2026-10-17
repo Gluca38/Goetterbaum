@@ -86,7 +86,7 @@ async function Inhalt({
 
 function Ergebnis({ geladen }: { geladen: RechnungsvorbereitungAusAdresse }) {
   const t = texte.rechnungsvorbereitung;
-  const { kunde, zeitraum, nichtFreigegeben, ausFrueherenZeitraeumen } = geladen;
+  const { kunde, zeitraum, nichtFreigegeben } = geladen;
   const { zeilen, summeCent } = rechnungsZeilen(geladen.ergebnis, geladen.namen);
   const auswahl = new URLSearchParams({ kunde: kunde.id, monat: zeitraum.ersterMonat });
   const zurFreigabe = new URLSearchParams({
@@ -105,7 +105,6 @@ function Ergebnis({ geladen }: { geladen: RechnungsvorbereitungAusAdresse }) {
           <Link href={`/freigabe?${zurFreigabe}`}>{t.zurFreigabe}</Link>
         </p>
       )}
-      {ausFrueherenZeitraeumen > 0 && <p>{t.hinweisFruehere(ausFrueherenZeitraeumen)}</p>}
       {zeilen.length === 0 ? (
         <p>{t.keinePositionen}</p>
       ) : (

@@ -132,25 +132,20 @@ test("Das Büro sieht Pauschale und gerundete Stunden eines Kunden, wird vor Feh
       "Summe;;;;;;;567,50\r\n",
   );
 
-  // Im April fließt die noch offene Zeit aus dem März mit ein, denn als
-  // abgerechnet markieren lässt sie sich noch nicht. Ein Hinweis nennt die
-  // vier März-Einträge (drei im Stunden-, einer im Pauschal-Objekt). Am
-  // 02.04. 63:24 Minuten → 75; zusammen 120 + 15 + 75 = 210 Minuten.
+  // Im April zählt nur, was im April beginnt: am 02.04. 63:24 Minuten →
+  // 75. Die März-Stunden kommen nicht noch einmal, und der nicht
+  // freigegebene März-Eintrag löst keine Warnung aus.
   await page.goto(`/rechnungsvorbereitung?kunde=${kunde.kundeId}&monat=2026-04`);
   await expect(page.getByRole("heading", { name: `${kunde.kundeName}: April 2026` })).toBeVisible();
-  await expect(
-    page.getByText(
-      "Enthalten sind 4 freigegebene Zeiteinträge, die vor diesem Zeitraum begonnen haben",
-    ),
-  ).toBeVisible();
   await expect(page.getByRole("alert").filter({ hasText: "Achtung" })).toHaveCount(0);
+  await expect(page.locator("tbody").getByRole("row")).toHaveCount(2);
   await expect(zeile(page, "Pauschale", kunde.pauschalObjekt, "April 2026")).toContainText(
     "500,00 €",
   );
   await expect(zeile(page, kunde.stundenObjekt, kunde.taetigkeit)).toContainText(
-    /3:30 Std.s*30,00 €s*105,00 €/,
+    /1:15 Std\.\s*30,00 €\s*37,50 €/,
   );
-  await expect(page.locator("tfoot")).toContainText(/Summes*605,00 €/);
+  await expect(page.locator("tfoot")).toContainText(/Summe\s*537,50 €/);
 
   // Mit eigener Rundungsregel des Kunden: minutengenau 106 + 12 Minuten.
   await page.goto(`/kunden/${kunde.kundeId}`);
