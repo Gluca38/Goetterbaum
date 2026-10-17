@@ -31,21 +31,64 @@ export async function ladeAuswahl(supabase: SupabaseClient): Promise<{
   return { objekte: objekte.data, taetigkeiten: taetigkeiten.data };
 }
 
-// Die eigenen Zeiteinträge der angezeigten Tage und immer der laufende,
-// dazu der Zeitpunkt, zu dem geladen wurde.
-export async function ladeMeineZeiteintraege(
+// Die Zeiteinträge eines Mitarbeiters in den angezeigten Tagen und immer
+// der laufende, dazu der Zeitpunkt, zu dem geladen wurde. Fremde
+// Mitarbeiter liefert die Datenbank nur Vorarbeitern und dem Büro.
+export async function ladeZeiteintraegeVon(
   supabase: SupabaseClient,
+  mitarbeiterId: string,
 ): Promise<{ eintraege: MeinZeiteintrag[]; jetzt: number }> {
   const jetzt = Date.now();
-  const { data, error } = await supabase.rpc("meine_zeiteintraege", { ab: angezeigtAb(jetzt) });
+  const { data, error } = await supabase.rpc("zeiteintraege_von", {
+    wer: mitarbeiterId,
+    ab: angezeigtAb(jetzt),
+  });
   if (error) throw error;
   return { eintraege: data, jetzt };
 }
 
-// Ein eigener Zeiteintrag mit allem, was zum Ändern nötig ist, oder null,
-// wenn es ihn nicht gibt oder er jemand anderem gehört.
+// Ein aktiver Mitarbeiter, für den erfasst wird.
+export type MitarbeiterZumErfassen = { id: string; name: string };
+
+// Alle aktiven Mitarbeiter der Firma außer dem angemeldeten, nach Name.
+export async function ladeAndereMitarbeiter(
+  supabase: SupabaseClient,
+  ichId: string,
+): Promise<MitarbeiterZumErfassen[]> {
+  const { data, error } = await supabase
+    .from("mitarbeiter")
+    .select("id, name")
+    .eq("aktiv", true)
+    .neq("id", ichId)
+    .order("name")
+    .returns<MitarbeiterZumErfassen[]>();
+  if (error) throw error;
+  return data;
+}
+
+// Ein aktiver Mitarbeiter, oder null, wenn es ihn nicht gibt, er
+// deaktiviert ist oder der angemeldete Nutzer ihn nicht sehen darf.
+export async function ladeAktivenMitarbeiter(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<MitarbeiterZumErfassen | null> {
+  if (!istId(id)) return null;
+  const { data, error } = await supabase
+    .from("mitarbeiter")
+    .select("id, name")
+    .eq("id", id)
+    .eq("aktiv", true)
+    .maybeSingle<MitarbeiterZumErfassen>();
+  if (error) throw error;
+  return data;
+}
+
+// Ein Zeiteintrag mit allem, was zum Ändern nötig ist, oder null, wenn es
+// ihn nicht gibt oder der angemeldete Nutzer ihn nicht sehen darf (normale
+// Mitarbeiter sehen nur ihre eigenen).
 export type ZeiteintragZumAendern = {
   id: string;
+  mitarbeiter_id: string;
   art: ZeiteintragArt;
   objekt_id: string | null;
   taetigkeit_id: string | null;
@@ -53,25 +96,24 @@ export type ZeiteintragZumAendern = {
   ende: string | null;
 };
 
-export async function ladeMeinenZeiteintrag(
+export async function ladeZeiteintragZumAendern(
   supabase: SupabaseClient,
-  mitarbeiterId: string,
   id: string,
 ): Promise<ZeiteintragZumAendern | null> {
   if (!istId(id)) return null;
   const { data, error } = await supabase
     .from("zeiteintrag")
-    .select("id, art, objekt_id, taetigkeit_id, beginn, ende")
+    .select("id, mitarbeiter_id, art, objekt_id, taetigkeit_id, beginn, ende")
     .eq("id", id)
-    // Das Büro sieht auch fremde Einträge; hier geht es nur um eigene.
-    .eq("mitarbeiter_id", mitarbeiterId)
     .maybeSingle<ZeiteintragZumAendern>();
   if (error) throw error;
   return data;
 }
 
 // Ein Zeiteintrag, wie ihn das Büro in der Übersicht sieht.
-export type ZeiteintragDerFirma = MeinZeiteintrag & { mitarbeiter_name: string };
+export type ZeiteintragDerFirma = Omit<MeinZeiteintrag, "angelegt_von"> & {
+  mitarbeiter_name: string;
+};
 
 // Fürs Büro: alle Zeiteinträge der Firma in den angezeigten Tagen und alle
 // laufenden, der neueste zuerst.

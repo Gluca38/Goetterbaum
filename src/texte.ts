@@ -29,6 +29,7 @@ export const texte = {
     objekteVerwalten: "Objekte verwalten",
     taetigkeitenVerwalten: "Tätigkeiten verwalten",
     zeiteintraegeAnsehen: "Zeiteinträge ansehen",
+    fuerAndereErfassen: "Für andere erfassen",
   },
   passwortVergessen: {
     titel: "Passwort vergessen",
@@ -231,6 +232,7 @@ export const texte = {
     keineEintraege: (tage: number) =>
       `In den letzten ${tage} Tagen gibt es noch keine Zeiteinträge.`,
     vonBis: (von: string, bis: string) => `${von}–${bis}`,
+    angelegtVon: (name: string) => `Angelegt von ${name}`,
     fehlerObjekt: "Bitte wähle ein Objekt.",
     fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",
     fehlerLaeuftSchon: "Es läuft schon ein Zeiteintrag. Stoppe ihn, bevor du einen neuen startest.",
@@ -276,6 +278,20 @@ export const texte = {
       "Das Ende muss nach dem Beginn liegen. Über Mitternacht trage bitte zwei Einträge ein.",
     fehlerZukunft: "Ein Nachtrag kann nicht in der Zukunft enden.",
   },
+  fuerAndere: {
+    titel: "Für andere erfassen",
+    laedt: "Lädt …",
+    keineBerechtigung: "Für andere erfassen dürfen nur Vorarbeiter und das Büro.",
+    hinweis: "Für wen möchtest du Zeit erfassen?",
+    keineMitarbeiter: "Es gibt keine anderen aktiven Mitarbeiter.",
+    erfassungFuer: (name: string) => `Erfassung für ${name}`,
+    fuer: (name: string) => `Für ${name}`,
+    zeiteintraege: "Zeiteinträge",
+    nichtGefunden: "Diesen Mitarbeiter gibt es nicht oder er ist deaktiviert.",
+    zurAuswahl: "Zurück zur Auswahl",
+    fehlerUeberschneidung:
+      "Diese Zeit überschneidet sich mit einem anderen Zeiteintrag dieses Mitarbeiters. Bitte prüfe Beginn und Ende.",
+  },
   zeiteintraege: {
     titel: "Zeiteinträge",
     laedt: "Lädt …",
@@ -286,6 +302,7 @@ export const texte = {
     spalteZeit: "Zeit",
     spalteWas: "Was",
     spalteNachtrag: "Nachtrag",
+    spalteAngelegtVon: "Angelegt von",
     laeuft: "läuft",
     protokollOeffnen: "Protokoll",
     nichtGefunden: "Diesen Zeiteintrag gibt es nicht.",

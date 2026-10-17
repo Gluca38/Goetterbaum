@@ -23,7 +23,8 @@ export default function ZeiteintraegeUebersicht() {
 }
 
 // Alle Zeiteinträge der Firma, der neueste zuerst. Nachträge sind
-// markiert; jeder Eintrag führt zu seinem Änderungsprotokoll.
+// markiert, und bei jedem steht, wer ihn angelegt hat. Jeder Eintrag führt
+// zu seinem Änderungsprotokoll, beendete auch zum Ändern.
 async function Liste() {
   const t = texte.zeiteintraege;
   const eintraege = await ladeZeiteintraegeDerFirma(await createClient());
@@ -41,7 +42,9 @@ async function Liste() {
               <th>{t.spalteZeit}</th>
               <th>{t.spalteWas}</th>
               <th>{t.spalteNachtrag}</th>
+              <th>{t.spalteAngelegtVon}</th>
               <th>{t.protokollOeffnen}</th>
+              <th>{texte.nachtrag.aendern}</th>
             </tr>
           </thead>
           <tbody>
@@ -51,8 +54,14 @@ async function Liste() {
                 <td>{tagUndZeit(e.beginn, e.ende, t.laeuft)}</td>
                 <td>{wasUndWo(e)}</td>
                 <td>{e.nachtrag ? texte.nachtrag.markierung : ""}</td>
+                <td>{e.angelegt_von_name ?? texte.protokoll.unbekannt}</td>
                 <td>
                   <Link href={`/zeiteintraege/${e.id}`}>{t.protokollOeffnen}</Link>
+                </td>
+                <td>
+                  {e.ende !== null && (
+                    <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
+                  )}
                 </td>
               </tr>
             ))}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { angemeldeterMitarbeiter } from "@/lib/angemeldeter-mitarbeiter";
+import { darfFuerAndereErfassen } from "@/lib/rollen";
 import { texte } from "@/texte";
 import { abmelden } from "./actions";
 import { Erfassung } from "./erfassung/erfassung";
@@ -32,7 +33,12 @@ async function Begruessung() {
       <p>
         {texte.start.rolle}: <strong>{texte.rollen[mitarbeiter.rolle]}</strong>
       </p>
-      <Erfassung />
+      <Erfassung mitarbeiterId={mitarbeiter.id} eigene />
+      {darfFuerAndereErfassen(mitarbeiter.rolle) && (
+        <p>
+          <Link href="/fuer-andere">{texte.start.fuerAndereErfassen}</Link>
+        </p>
+      )}
       {mitarbeiter.rolle === "buero" && (
         <>
           <p>

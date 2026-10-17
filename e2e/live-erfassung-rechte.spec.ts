@@ -165,10 +165,10 @@ test("Jeder sieht und stoppt nur seine eigenen Zeiteinträge, auch über die Fir
   expect(fremdStoppen.data).toEqual([]);
   expect((await gespeicherterEintrag(fremder)).ende).toBeNull();
 
-  // Vorarbeiter sehen vorerst nur eigene Einträge, das Büro alle der
-  // eigenen Firma, das Büro einer anderen Firma keine.
+  // Vorarbeiter und Büro sehen alle Einträge der eigenen Firma, weil sie
+  // für andere erfassen (#12); das Büro einer anderen Firma sieht keine.
   for (const [zugang, sichtbar] of [
-    [firmaA.vorarbeiter, []],
+    [firmaA.vorarbeiter, [meiner, fremder].sort()],
     [firmaA.buero, [meiner, fremder].sort()],
     [firmaB.buero, []],
   ] as const) {

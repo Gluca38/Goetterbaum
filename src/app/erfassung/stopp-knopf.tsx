@@ -5,8 +5,9 @@ import { zeiteintragStoppen } from "./actions";
 import styles from "./erfassung.module.css";
 import { Fehlermeldung, useErfassungsAktion } from "./erfassungs-aktion";
 
-export function StoppKnopf() {
-  const [zustand, ausfuehren, laeuft] = useErfassungsAktion(zeiteintragStoppen, {
+// fuer ist der Mitarbeiter, dessen laufender Zeiteintrag gestoppt wird.
+export function StoppKnopf({ fuer }: { fuer: string }) {
+  const [zustand, ausfuehren, laeuft] = useErfassungsAktion(zeiteintragStoppen.bind(null, fuer), {
     ohneNetz: texte.erfassung.ohneNetzStopp,
     nichtGespeichert: texte.erfassung.fehlerStopp,
   });

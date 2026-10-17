@@ -16,17 +16,26 @@ const MELDUNGEN = {
 // Start eines Zeiteintrags: Objekt suchen, Tätigkeit wählen, Start. Oder
 // eine Fahrt ohne Objekt starten.
 export function StartFormular({
+  fuer,
   objekte,
   taetigkeiten,
 }: {
+  // Der Mitarbeiter, dessen Zeit erfasst wird.
+  fuer: string;
   // Nur aktive Objekte und Tätigkeiten.
   objekte: ObjektZurAuswahl[];
   taetigkeiten: TaetigkeitZurAuswahl[];
 }) {
   const [objektId, setObjektId] = useState("");
   const [taetigkeitId, setTaetigkeitId] = useState("");
-  const [start, starten, startLaeuft] = useErfassungsAktion(zeiteintragStarten, MELDUNGEN);
-  const [fahrt, fahrtStartenLassen, fahrtLaeuft] = useErfassungsAktion(fahrtStarten, MELDUNGEN);
+  const [start, starten, startLaeuft] = useErfassungsAktion(
+    zeiteintragStarten.bind(null, fuer),
+    MELDUNGEN,
+  );
+  const [fahrt, fahrtStartenLassen, fahrtLaeuft] = useErfassungsAktion(
+    fahrtStarten.bind(null, fuer),
+    MELDUNGEN,
+  );
   const laeuft = startLaeuft || fahrtLaeuft;
 
   return (
