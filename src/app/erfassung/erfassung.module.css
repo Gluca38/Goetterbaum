@@ -119,3 +119,13 @@
   gap: 8px;
   list-style: none;
 }
+
+.markierung {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fff3cd;
+  color: #664d03;
+  font-size: 0.875rem;
+  font-weight: bold;
+}

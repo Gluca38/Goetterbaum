@@ -1,15 +1,26 @@
 // Bereitet die eigenen Zeiteinträge für die Anzeige am Handy auf. Tage
 // und Uhrzeiten gelten in Berlin, egal wo der Server läuft.
 import { berlinerDatum, berlinerMitternacht } from "@/lib/berliner-zeit";
+import { texte } from "@/texte";
+
+// Die Arten eines Zeiteintrags, wie in der Datenbank (Typ zeiteintrag_art).
+export type ZeiteintragArt = "taetigkeit" | "fahrt";
+
+// Die Art in Worten.
+export function artAlsText(art: ZeiteintragArt): string {
+  return art === "fahrt" ? texte.erfassung.fahrt : texte.erfassung.taetigkeit;
+}
 
 // Ein eigener Zeiteintrag, wie ihn die Datenbank-Funktion
 // meine_zeiteintraege liefert.
 export type MeinZeiteintrag = {
   id: string;
-  art: "taetigkeit" | "fahrt";
+  art: ZeiteintragArt;
   // Zeitpunkte als ISO-Text mit Zeitzone; ende ist leer, solange er läuft.
   beginn: string;
   ende: string | null;
+  // Nachträglich eingetragen oder geändert (setzt die Datenbank).
+  nachtrag: boolean;
   objekt_bezeichnung: string | null;
   taetigkeit_name: string | null;
 };
@@ -85,4 +96,20 @@ export function angezeigtAb(jetzt: number): string {
   const [jahr, monat, tag] = berlinerDatum(jetzt).split("-").map(Number);
   const ersterTag = new Date(Date.UTC(jahr, monat - 1, tag - (ANGEZEIGTE_TAGE - 1)));
   return new Date(berlinerMitternacht(ersterTag.toISOString().slice(0, 10))).toISOString();
+}
+
+// Tag und von–bis eines Eintrags in einer Zeile, z. B. für die Übersicht
+// im Büro. Ein laufender Eintrag hat statt des Endes laeuft.
+export function tagUndZeit(beginn: string, ende: string | null, laeuft: string): string {
+  const von = Date.parse(beginn);
+  const bis = ende === null ? laeuft : uhrzeit.format(Date.parse(ende));
+  return `${tagesTitel.format(von)}, ${uhrzeit.format(von)}–${bis}`;
+}
+
+// Was und wo in einer Zeile: die Fahrt oder Objekt und Tätigkeit.
+export function wasUndWo(
+  eintrag: Pick<MeinZeiteintrag, "art" | "objekt_bezeichnung" | "taetigkeit_name">,
+): string {
+  if (eintrag.art === "fahrt") return texte.erfassung.fahrt;
+  return `${eintrag.objekt_bezeichnung} · ${eintrag.taetigkeit_name}`;
 }

@@ -39,11 +39,24 @@ function berlinerVersatz(zeitpunkt: number): number {
   return alsUtc - Math.floor(zeitpunkt / 1000) * 1000;
 }
 
+// Der Zeitpunkt zur Uhrzeit "HH:MM" am Tag "JJJJ-MM-TT" in Berlin. Eine
+// Uhrzeit, die es wegen der Zeitumstellung zweimal gibt, gilt beim ersten
+// Mal.
+export function berlinerZeitpunkt(datum: string, uhrzeit: string): number {
+  const alsUtc = Date.parse(`${datum}T${uhrzeit}:00Z`);
+  return alsUtc - berlinerVersatz(alsUtc - berlinerVersatz(alsUtc));
+}
+
 // Der Zeitpunkt, zu dem in Berlin der Tag "JJJJ-MM-TT" beginnt. Der
 // Wechsel zwischen Sommer- und Winterzeit liegt nie auf Mitternacht.
 export function berlinerMitternacht(datum: string): number {
-  const mitternachtUtc = Date.parse(`${datum}T00:00:00Z`);
-  return mitternachtUtc - berlinerVersatz(mitternachtUtc - berlinerVersatz(mitternachtUtc));
+  return berlinerZeitpunkt(datum, "00:00");
+}
+
+// Die Uhrzeit in Berlin als "HH:MM".
+export function berlinerUhrzeit(zeitpunkt: number): string {
+  const { hour, minute } = berlinerZeit(zeitpunkt);
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 // Teilt die Zeit von beginn bis ende an den Mitternachtsgrenzen in
@@ -62,4 +75,9 @@ export function aufBerlinerTageVerteilt(
     von = bis;
   }
   return stuecke;
+}
+
+// Der heutige Tag in Berlin als "JJJJ-MM-TT".
+export function heuteInBerlin(): string {
+  return berlinerDatum(Date.now());
 }

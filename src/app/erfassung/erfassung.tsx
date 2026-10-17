@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   ANGEZEIGTE_TAGE,
   laeuftSeit,
   nachTagen,
+  wasUndWo,
   type MeinZeiteintrag,
 } from "@/lib/zeiterfassung/anzeige";
 import { ladeAuswahl, ladeMeineZeiteintraege } from "@/lib/zeiterfassung/verwaltung";
@@ -30,11 +32,6 @@ export async function Erfassung() {
   );
 }
 
-function wasUndWo(eintrag: MeinZeiteintrag) {
-  if (eintrag.art === "fahrt") return texte.erfassung.fahrt;
-  return `${eintrag.objekt_bezeichnung} · ${eintrag.taetigkeit_name}`;
-}
-
 function Laufend({ eintrag, jetzt }: { eintrag: MeinZeiteintrag; jetzt: number }) {
   return (
     <div className={styles.laufend} role="status">
@@ -50,6 +47,9 @@ function MeineEintraege({ eintraege }: { eintraege: MeinZeiteintrag[] }) {
   return (
     <div className={styles.liste}>
       <h2>{texte.erfassung.meineEintraege}</h2>
+      <p>
+        <Link href="/nachtrag">{texte.nachtrag.nachtragen}</Link>
+      </p>
       {tage.length === 0 && <p>{texte.erfassung.keineEintraege(ANGEZEIGTE_TAGE)}</p>}
       {tage.map((tag) => (
         <section key={tag.datum} aria-label={tag.titel}>
@@ -60,8 +60,13 @@ function MeineEintraege({ eintraege }: { eintraege: MeinZeiteintrag[] }) {
                 <span>
                   {texte.erfassung.vonBis(e.von, e.bis)} · {e.dauer}
                 </span>
+                {e.nachtrag && (
+                  <span className={styles.markierung}>{texte.nachtrag.markierung}</span>
+                )}
                 <br />
                 {wasUndWo(e)}
+                <br />
+                <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
               </li>
             ))}
           </ul>
