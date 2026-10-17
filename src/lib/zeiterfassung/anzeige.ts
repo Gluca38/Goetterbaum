@@ -77,7 +77,7 @@ export function laeuftSeit(beginn: string, jetzt: number): string {
 
 // Wie viele Kalendertage die Liste der eigenen Einträge zeigt (heute
 // eingeschlossen).
-const ANGEZEIGTE_TAGE = 7;
+export const ANGEZEIGTE_TAGE = 7;
 
 // Ab wann die eigenen Einträge angezeigt werden: Mitternacht in Berlin am
 // ersten der angezeigten Tage, als ISO-Text.

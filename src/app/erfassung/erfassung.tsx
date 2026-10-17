@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
+  ANGEZEIGTE_TAGE,
   laeuftSeit,
   nachTagen,
   type MeinZeiteintrag,
@@ -38,7 +39,7 @@ function Laufend({ eintrag, jetzt }: { eintrag: MeinZeiteintrag; jetzt: number }
   return (
     <div className={styles.laufend} role="status">
       <p className={styles.seit}>{texte.erfassung.laeuftSeit(laeuftSeit(eintrag.beginn, jetzt))}</p>
-      <p className={styles.wo}>{wasUndWo(eintrag)}</p>
+      <p className={styles.beschreibung}>{wasUndWo(eintrag)}</p>
       <StoppKnopf />
     </div>
   );
@@ -49,7 +50,7 @@ function MeineEintraege({ eintraege }: { eintraege: MeinZeiteintrag[] }) {
   return (
     <div className={styles.liste}>
       <h2>{texte.erfassung.meineEintraege}</h2>
-      {tage.length === 0 && <p>{texte.erfassung.keineEintraege}</p>}
+      {tage.length === 0 && <p>{texte.erfassung.keineEintraege(ANGEZEIGTE_TAGE)}</p>}
       {tage.map((tag) => (
         <section key={tag.datum} aria-label={tag.titel}>
           <h3>{tag.titel}</h3>

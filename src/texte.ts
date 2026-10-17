@@ -221,7 +221,6 @@ export const texte = {
     fehlerStundensatz: "Der Stundensatz ist kein gültiger Betrag. Beispiel: 32,50",
   },
   erfassung: {
-    laedt: "Lädt …",
     laeuftSeit: (seit: string) => `Läuft seit ${seit}`,
     fahrt: "Fahrt",
     stopp: "Stopp",
@@ -237,7 +236,8 @@ export const texte = {
     taetigkeitWaehlen: "Bitte wählen …",
     keineTaetigkeiten: "Es gibt noch keine Tätigkeiten. Bitte wende dich an das Büro.",
     meineEintraege: "Meine Zeiteinträge",
-    keineEintraege: "In den letzten 7 Tagen gibt es noch keine Zeiteinträge.",
+    keineEintraege: (tage: number) =>
+      `In den letzten ${tage} Tagen gibt es noch keine Zeiteinträge.`,
     vonBis: (von: string, bis: string) => `${von}–${bis}`,
     fehlerObjekt: "Bitte wähle ein Objekt.",
     fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",

@@ -5,11 +5,16 @@ import type { ObjektZurAuswahl, TaetigkeitZurAuswahl } from "@/lib/zeiterfassung
 import { texte } from "@/texte";
 import { fahrtStarten, zeiteintragStarten } from "./actions";
 import styles from "./erfassung.module.css";
-import { useErfassungsAktion } from "./erfassungs-aktion";
+import { Fehlermeldung, useErfassungsAktion } from "./erfassungs-aktion";
 
 // So viele Treffer zeigt die Objektsuche höchstens, damit die Liste am
 // Handy überschaubar bleibt.
 const HOECHSTENS_TREFFER = 10;
+
+const MELDUNGEN = {
+  ohneNetz: texte.erfassung.ohneNetzStart,
+  nichtGespeichert: texte.erfassung.fehlerStart,
+};
 
 function passt(objekt: ObjektZurAuswahl, suche: string) {
   const text = [objekt.bezeichnung, objekt.strasse, objekt.plz, objekt.ort].join(" ");
@@ -27,18 +32,18 @@ export function StartFormular({
   taetigkeiten: TaetigkeitZurAuswahl[];
 }) {
   const [suche, setSuche] = useState("");
-  const [start, starten, startLaeuft] = useErfassungsAktion(
-    zeiteintragStarten,
-    texte.erfassung.ohneNetzStart,
-  );
-  const [fahrt, fahrtLos, fahrtLaeuft] = useErfassungsAktion(
-    fahrtStarten,
-    texte.erfassung.ohneNetzStart,
-  );
+  // Die Auswahl bleibt erhalten, auch wenn die Suche das Objekt ausblendet
+  // oder der Start fehlschlägt (React leert Formulare nach jeder Aktion).
+  const [objektId, setObjektId] = useState("");
+  const [taetigkeitId, setTaetigkeitId] = useState("");
+  const [start, starten, startLaeuft] = useErfassungsAktion(zeiteintragStarten, MELDUNGEN);
+  const [fahrt, fahrtStartenLassen, fahrtLaeuft] = useErfassungsAktion(fahrtStarten, MELDUNGEN);
   const laeuft = startLaeuft || fahrtLaeuft;
 
   const treffer = objekte.filter((o) => passt(o, suche));
   const gezeigt = treffer.slice(0, HOECHSTENS_TREFFER);
+  const gewaehlt = objekte.find((o) => o.id === objektId);
+  if (gewaehlt && !gezeigt.includes(gewaehlt)) gezeigt.unshift(gewaehlt);
 
   return (
     <>
@@ -59,7 +64,13 @@ export function StartFormular({
             </label>
             {gezeigt.map((o) => (
               <label key={o.id} className={styles.objekt}>
-                <input type="radio" name="objekt" value={o.id} />
+                <input
+                  type="radio"
+                  name="objekt"
+                  value={o.id}
+                  checked={o.id === objektId}
+                  onChange={() => setObjektId(o.id)}
+                />
                 <span>
                   <strong>{o.bezeichnung}</strong>
                   <br />
@@ -68,7 +79,7 @@ export function StartFormular({
               </label>
             ))}
             {treffer.length === 0 && <p>{texte.erfassung.keineTreffer}</p>}
-            {treffer.length > gezeigt.length && <p>{texte.erfassung.weitereTreffer}</p>}
+            {treffer.length > HOECHSTENS_TREFFER && <p>{texte.erfassung.weitereTreffer}</p>}
           </fieldset>
         )}
         {taetigkeiten.length === 0 ? (
@@ -76,7 +87,12 @@ export function StartFormular({
         ) : (
           <label>
             {texte.erfassung.taetigkeit}
-            <select name="taetigkeit" defaultValue="" className={styles.eingabe}>
+            <select
+              name="taetigkeit"
+              value={taetigkeitId}
+              onChange={(e) => setTaetigkeitId(e.target.value)}
+              className={styles.eingabe}
+            >
               <option value="" disabled>
                 {texte.erfassung.taetigkeitWaehlen}
               </option>
@@ -91,21 +107,13 @@ export function StartFormular({
         <button type="submit" className={`${styles.gross} ${styles.start}`} disabled={laeuft}>
           {startLaeuft ? texte.erfassung.startLaeuft : texte.erfassung.start}
         </button>
-        {start.fehler && (
-          <p role="alert" className={styles.fehler}>
-            {start.fehler}
-          </p>
-        )}
+        <Fehlermeldung zustand={start} />
       </form>
-      <form action={fahrtLos} className={styles.formular}>
+      <form action={fahrtStartenLassen} className={styles.formular}>
         <button type="submit" className={`${styles.gross} ${styles.fahrt}`} disabled={laeuft}>
           {fahrtLaeuft ? texte.erfassung.startLaeuft : texte.erfassung.fahrtStarten}
         </button>
-        {fahrt.fehler && (
-          <p role="alert" className={styles.fehler}>
-            {fahrt.fehler}
-          </p>
-        )}
+        <Fehlermeldung zustand={fahrt} />
       </form>
     </>
   );

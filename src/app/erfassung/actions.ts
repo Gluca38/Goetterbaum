@@ -8,10 +8,12 @@ import { createClient } from "@/lib/supabase/server";
 import { pruefeStartEingabe } from "@/lib/zeiterfassung/eingabe";
 import { texte } from "@/texte";
 
-// Fehlercodes der Datenbank (siehe Migration zum Zeiteintrag).
+// Fehlercodes der Datenbank (siehe Migration zum Zeiteintrag): Es läuft
+// schon einer (eindeutig je Mitarbeiter), bzw. Objekt oder Tätigkeit sind
+// archiviert (Prüfregel) oder gehören nicht zur Firma (Fremdschlüssel).
 const LAEUFT_SCHON = "23505";
-const ARCHIVIERT = "23514";
-const UNBEKANNT = "23503";
+const PRUEFREGEL_VERLETZT = "23514";
+const FREMDSCHLUESSEL_VERLETZT = "23503";
 
 // Jede Aktion ist auch ohne die Oberfläche per Direktaufruf erreichbar.
 // Deshalb prüft sie zuerst, wer angemeldet ist. Gespeichert wird im Namen
@@ -26,7 +28,7 @@ async function alsErfasser() {
 
 function fehlerBeimStart(error: PostgrestError): Rueckmeldung {
   if (error.code === LAEUFT_SCHON) return FEHLER(texte.erfassung.fehlerLaeuftSchon);
-  if (error.code === ARCHIVIERT || error.code === UNBEKANNT) {
+  if (error.code === PRUEFREGEL_VERLETZT || error.code === FREMDSCHLUESSEL_VERLETZT) {
     return FEHLER(texte.erfassung.fehlerNichtZurAuswahl);
   }
   console.error("Zeiteintrag starten fehlgeschlagen", error);
