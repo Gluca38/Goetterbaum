@@ -29,14 +29,16 @@ const MELDUNGEN = {
 
 // Nachtragen oder Ändern eines beendeten Zeiteintrags: Tätigkeit in einem
 // Objekt oder Fahrt, Datum, von–bis. Nach dem Speichern geht es zurück zur
-// Erfassung.
+// Erfassung, aus der man kam (zurueck): der eigenen oder der eines anderen.
 export function NachtragFormular({
   aktion,
+  zurueck,
   objekte,
   taetigkeiten,
   vorgabe,
 }: {
   aktion: (vorher: Rueckmeldung, formData: FormData) => Promise<Rueckmeldung>;
+  zurueck: string;
   // Nur aktive Objekte und Tätigkeiten.
   objekte: ObjektZurAuswahl[];
   taetigkeiten: TaetigkeitZurAuswahl[];
@@ -66,7 +68,7 @@ export function NachtragFormular({
       setObjektId(vorgabe.objekt_id);
       setTaetigkeitId(vorgabe.taetigkeit_id);
       setZeit({ datum: vorgabe.datum, von: vorgabe.von, bis: vorgabe.bis });
-      router.push("/");
+      router.push(zurueck);
       return START;
     },
     MELDUNGEN,
@@ -137,7 +139,7 @@ export function NachtragFormular({
       </button>
       <Fehlermeldung zustand={zustand} />
       <p>
-        <Link href="/">{t.zurueck}</Link>
+        <Link href={zurueck}>{t.zurueck}</Link>
       </p>
     </form>
   );

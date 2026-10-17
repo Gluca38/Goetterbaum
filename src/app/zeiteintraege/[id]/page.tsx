@@ -47,6 +47,7 @@ async function Protokoll({ id: idVersprechen }: { id: Promise<string> }) {
         {wasUndWo(eintrag)}
         {eintrag.nachtrag && ` · ${texte.nachtrag.markierung}`}
       </p>
+      <p>{texte.erfassung.angelegtVon(eintrag.angelegt_von_name ?? texte.protokoll.unbekannt)}</p>
       {protokoll.length === 0 ? (
         <p>{t.keinProtokoll}</p>
       ) : (

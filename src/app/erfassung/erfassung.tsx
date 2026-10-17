@@ -2,73 +2,110 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   ANGEZEIGTE_TAGE,
+  angelegtVon,
   laeuftSeit,
   nachTagen,
   wasUndWo,
   type MeinZeiteintrag,
 } from "@/lib/zeiterfassung/anzeige";
-import { ladeAuswahl, ladeMeineZeiteintraege } from "@/lib/zeiterfassung/verwaltung";
+import { ladeAuswahl, ladeZeiteintraegeVon } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 import styles from "./erfassung.module.css";
 import { StartFormular } from "./start-formular";
 import { StoppKnopf } from "./stopp-knopf";
 
-// Die Live-Erfassung des angemeldeten Nutzers: entweder der laufende
-// Zeiteintrag mit Stopp oder das Start-Formular, darunter die eigenen
-// Einträge der letzten Tage.
-export async function Erfassung() {
+// Die Live-Erfassung eines Mitarbeiters: entweder der laufende Zeiteintrag
+// mit Stopp oder das Start-Formular, darunter seine Einträge der letzten
+// Tage. eigene: der angemeldete Nutzer erfasst für sich selbst, sonst als
+// Vorarbeiter oder Büro für einen anderen.
+export async function Erfassung({
+  mitarbeiterId,
+  eigene,
+}: {
+  mitarbeiterId: string;
+  eigene: boolean;
+}) {
   const supabase = await createClient();
-  const { eintraege, jetzt } = await ladeMeineZeiteintraege(supabase);
+  const { eintraege, jetzt } = await ladeZeiteintraegeVon(supabase, mitarbeiterId);
   const laufender = eintraege.find((e) => e.ende === null);
   // Die Auswahl braucht nur, wer gerade nichts laufen hat.
   const auswahl = laufender ? null : await ladeAuswahl(supabase);
 
   return (
     <section className={styles.erfassung}>
-      {laufender && <Laufend eintrag={laufender} jetzt={jetzt} />}
-      {auswahl && <StartFormular {...auswahl} />}
-      <MeineEintraege eintraege={eintraege} />
+      {laufender && <Laufend eintrag={laufender} mitarbeiterId={mitarbeiterId} jetzt={jetzt} />}
+      {auswahl && <StartFormular fuer={mitarbeiterId} {...auswahl} />}
+      <Eintraege eintraege={eintraege} mitarbeiterId={mitarbeiterId} eigene={eigene} />
     </section>
   );
 }
 
-function Laufend({ eintrag, jetzt }: { eintrag: MeinZeiteintrag; jetzt: number }) {
+function Laufend({
+  eintrag,
+  mitarbeiterId,
+  jetzt,
+}: {
+  eintrag: MeinZeiteintrag;
+  mitarbeiterId: string;
+  jetzt: number;
+}) {
+  const anleger = angelegtVon(eintrag, mitarbeiterId);
   return (
     <div className={styles.laufend} role="status">
       <p className={styles.seit}>{texte.erfassung.laeuftSeit(laeuftSeit(eintrag.beginn, jetzt))}</p>
       <p className={styles.beschreibung}>{wasUndWo(eintrag)}</p>
-      <StoppKnopf />
+      {anleger && <p>{anleger}</p>}
+      <StoppKnopf fuer={mitarbeiterId} />
     </div>
   );
 }
 
-function MeineEintraege({ eintraege }: { eintraege: MeinZeiteintrag[] }) {
+function Eintraege({
+  eintraege,
+  mitarbeiterId,
+  eigene,
+}: {
+  eintraege: MeinZeiteintrag[];
+  mitarbeiterId: string;
+  eigene: boolean;
+}) {
   const tage = nachTagen(eintraege);
   return (
     <div className={styles.liste}>
-      <h2>{texte.erfassung.meineEintraege}</h2>
+      <h2>{eigene ? texte.erfassung.meineEintraege : texte.fuerAndere.zeiteintraege}</h2>
       <p>
-        <Link href="/nachtrag">{texte.nachtrag.nachtragen}</Link>
+        <Link href={eigene ? "/nachtrag" : `/nachtrag?fuer=${mitarbeiterId}`}>
+          {texte.nachtrag.nachtragen}
+        </Link>
       </p>
       {tage.length === 0 && <p>{texte.erfassung.keineEintraege(ANGEZEIGTE_TAGE)}</p>}
       {tage.map((tag) => (
         <section key={tag.datum} aria-label={tag.titel}>
           <h3>{tag.titel}</h3>
           <ul>
-            {tag.eintraege.map((e) => (
-              <li key={e.id}>
-                <span>
-                  {texte.erfassung.vonBis(e.von, e.bis)} · {e.dauer}
-                </span>
-                {e.nachtrag && (
-                  <span className={styles.markierung}>{texte.nachtrag.markierung}</span>
-                )}
-                <br />
-                {wasUndWo(e)}
-                <br />
-                <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
-              </li>
-            ))}
+            {tag.eintraege.map((e) => {
+              const anleger = angelegtVon(e, mitarbeiterId);
+              return (
+                <li key={e.id}>
+                  <span>
+                    {texte.erfassung.vonBis(e.von, e.bis)} · {e.dauer}
+                  </span>
+                  {e.nachtrag && (
+                    <span className={styles.markierung}>{texte.nachtrag.markierung}</span>
+                  )}
+                  <br />
+                  {wasUndWo(e)}
+                  {anleger && (
+                    <>
+                      <br />
+                      {anleger}
+                    </>
+                  )}
+                  <br />
+                  <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ))}

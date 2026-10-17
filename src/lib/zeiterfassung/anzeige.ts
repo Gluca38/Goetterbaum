@@ -11,8 +11,8 @@ export function artAlsText(art: ZeiteintragArt): string {
   return art === "fahrt" ? texte.erfassung.fahrt : texte.erfassung.taetigkeit;
 }
 
-// Ein eigener Zeiteintrag, wie ihn die Datenbank-Funktion
-// meine_zeiteintraege liefert.
+// Ein Zeiteintrag eines Mitarbeiters, wie ihn die Datenbank-Funktionen
+// meine_zeiteintraege und zeiteintraege_von liefern.
 export type MeinZeiteintrag = {
   id: string;
   art: ZeiteintragArt;
@@ -23,6 +23,10 @@ export type MeinZeiteintrag = {
   nachtrag: boolean;
   objekt_bezeichnung: string | null;
   taetigkeit_name: string | null;
+  // Wer den Eintrag angelegt hat: der Mitarbeiter selbst, ein Vorarbeiter
+  // oder das Büro.
+  angelegt_von: string;
+  angelegt_von_name: string | null;
 };
 
 export type AngezeigterEintrag = MeinZeiteintrag & {
@@ -112,4 +116,15 @@ export function wasUndWo(
 ): string {
   if (eintrag.art === "fahrt") return texte.erfassung.fahrt;
   return `${eintrag.objekt_bezeichnung} · ${eintrag.taetigkeit_name}`;
+}
+
+// Wer den Eintrag für den Mitarbeiter angelegt hat, oder null, wenn er es
+// selbst war. Am Handy soll nicht unter jedem Eintrag der eigene Name
+// stehen.
+export function angelegtVon(
+  eintrag: Pick<MeinZeiteintrag, "angelegt_von" | "angelegt_von_name">,
+  mitarbeiterId: string,
+): string | null {
+  if (eintrag.angelegt_von === mitarbeiterId) return null;
+  return texte.erfassung.angelegtVon(eintrag.angelegt_von_name ?? texte.protokoll.unbekannt);
 }

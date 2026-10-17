@@ -13,7 +13,7 @@ Eine Person, die für die Firma vor Ort arbeitet und Zeit erfasst.
 _Avoid_: Angestellter, Kraft, User
 
 **Vorarbeiter**:
-Ein Mitarbeiter, der eine Gruppe leitet und zusätzlich für Mitarbeiter seiner Gruppe Zeit erfassen darf.
+Ein Mitarbeiter, der vor Ort eine Gruppe leitet und zusätzlich für jeden aktiven Mitarbeiter der Firma Zeit erfassen darf. Feste Gruppen gibt es in der Software nicht.
 _Avoid_: Teamleiter, Kolonnenführer
 
 **Büro**:
