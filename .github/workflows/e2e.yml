@@ -36,15 +36,6 @@ jobs:
       # danach auf Staging
       - name: Alle Migrationen auf einer Wegwerf-Datenbank einspielen
         run: npx supabase db start
-      # NUR TEST (#25): zeigt, was nach dem Fehler in der Wegwerf-Datenbank steht
-      - name: NUR TEST - Reste in der Wegwerf-Datenbank suchen
-        if: failure()
-        run: |
-          mv supabase/migrations/20261018000000_nur_test_kaputt.sql /tmp/
-          npx supabase db start
-          mv /tmp/20261018000000_nur_test_kaputt.sql supabase/migrations/
-          npx supabase db push --local --include-all || echo "db push ist wie erwartet gescheitert"
-          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -c "select 'typ' as was, count(*) from pg_type where typname = 'probe_typ' union all select 'tabelle', count(*) from pg_tables where tablename = 'probe_tabelle' union all select 'als erledigt vermerkt', count(*) from supabase_migrations.schema_migrations where version = '20261018000000';" || docker logs supabase_db_Goetterbaum 2>&1 | tail -20
 
   staging-migrationen:
     name: Migrationen auf Staging
