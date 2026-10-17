@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { AktionsKnopf } from "@/app/aktions-knopf";
+import { freigabeZuruecknehmen } from "@/app/freigabe/actions";
 import { NurFuerBuero } from "@/app/nur-fuer-buero";
 import { createClient } from "@/lib/supabase/server";
 import { istUnvollstaendig, tagUndZeit, wasUndWo } from "@/lib/zeiterfassung/anzeige";
+import { zeitAlsText } from "@/lib/zeiterfassung/protokoll";
 import { ladeZeiteintragMitProtokoll } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 import styles from "../../page.module.css";
@@ -22,8 +25,8 @@ export default function ZeiteintragProtokoll({ params }: PageProps<"/zeiteintrae
   );
 }
 
-// Der Zeiteintrag und darunter jede Änderung: wann, wer, was vorher und
-// was nachher.
+// Der Zeiteintrag, ob und von wem er freigegeben ist (mit Rücknahme), und
+// darunter jede Änderung: wann, wer, was vorher und was nachher.
 async function Protokoll({ id: idVersprechen }: { id: Promise<string> }) {
   const t = texte.zeiteintraege;
   const geladen = await ladeZeiteintragMitProtokoll(await createClient(), await idVersprechen);
@@ -57,6 +60,21 @@ async function Protokoll({ id: idVersprechen }: { id: Promise<string> }) {
         {eintrag.nachtrag && ` · ${texte.nachtrag.markierung}`}
       </p>
       <p>{texte.erfassung.angelegtVon(eintrag.angelegt_von_name ?? texte.protokoll.unbekannt)}</p>
+      {eintrag.freigegeben_am !== null && (
+        <>
+          <p>
+            {texte.freigabe.freigegebenAmVon(
+              zeitAlsText(eintrag.freigegeben_am),
+              eintrag.freigegeben_von_name ?? texte.protokoll.unbekannt,
+            )}
+          </p>
+          <AktionsKnopf
+            aktion={freigabeZuruecknehmen.bind(null, eintrag.id)}
+            knopf={texte.freigabe.zuruecknehmen}
+            knopfLaeuft={texte.freigabe.zuruecknehmenLaeuft}
+          />
+        </>
+      )}
       {protokoll.length === 0 ? (
         <p>{t.keinProtokoll}</p>
       ) : (

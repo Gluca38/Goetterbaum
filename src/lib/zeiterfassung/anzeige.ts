@@ -21,6 +21,8 @@ export type MeinZeiteintrag = {
   ende: string | null;
   // Nachträglich eingetragen oder geändert (setzt die Datenbank).
   nachtrag: boolean;
+  // Vom Büro freigegeben; dann für Mitarbeiter und Vorarbeiter gesperrt.
+  freigegeben: boolean;
   objekt_bezeichnung: string | null;
   taetigkeit_name: string | null;
   // Wer den Eintrag angelegt hat: der Mitarbeiter selbst, ein Vorarbeiter

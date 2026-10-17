@@ -18,7 +18,7 @@ export type NachtragErgebnis = { ok: true; daten: NachtragDaten } | { ok: false;
 
 const UHRZEIT = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-function istDatum(wert: string): boolean {
+export function istDatum(wert: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(wert)) return false;
   // Ein Tag wie der 30.02. würde sonst still zum 02.03.
   return new Date(`${wert}T00:00:00Z`).toISOString().slice(0, 10) === wert;

@@ -73,6 +73,7 @@ test("Das Anlegen zeigt alle Angaben, das Ändern nur, was sich geändert hat", 
         { feld: "Beginn", vorher: "–", nachher: "16.10.2026, 08:00" },
         { feld: "Ende", vorher: "–", nachher: "–" },
         { feld: "Nachtrag", vorher: "–", nachher: "nein" },
+        { feld: "Freigegeben", vorher: "–", nachher: "–" },
       ],
     },
     {
@@ -116,5 +117,35 @@ test("Eine Fahrt hat kein Objekt; Änderungen ohne Benutzer stammen vom System",
     { feld: "Art", vorher: "Tätigkeit", nachher: "Fahrt" },
     { feld: "Objekt", vorher: "Haus A", nachher: "–" },
     { feld: "Tätigkeit", vorher: "Unterhaltsreinigung", nachher: "–" },
+  ]);
+});
+
+test("Freigabe und Rücknahme der Freigabe stehen im Protokoll", () => {
+  const freigegeben = { ...GESTOPPT, freigegeben_am: "2026-10-19T07:12:43.512+00:00" };
+  const zeilen = protokollAnzeigen(
+    [
+      {
+        id: 8,
+        aktion: "geaendert",
+        geaendert_am: "2026-10-19T07:12:43.512+00:00",
+        geaendert_von_name: "Petra Büro",
+        // Einträge aus der Zeit vor der Freigabe haben das Feld noch nicht.
+        vorher: GESTOPPT,
+        nachher: freigegeben,
+      },
+      {
+        id: 9,
+        aktion: "geaendert",
+        geaendert_am: "2026-10-20T13:00:05+00:00",
+        geaendert_von_name: "Petra Büro",
+        vorher: freigegeben,
+        nachher: { ...GESTOPPT, freigegeben_am: null },
+      },
+    ],
+    NAMEN,
+  );
+  expect(zeilen.map((z) => z.aenderungen)).toEqual([
+    [{ feld: "Freigegeben", vorher: "–", nachher: "19.10.2026, 09:12" }],
+    [{ feld: "Freigegeben", vorher: "19.10.2026, 09:12", nachher: "–" }],
   ]);
 });
