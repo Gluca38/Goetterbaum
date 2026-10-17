@@ -8,7 +8,7 @@ import type { Monat } from "@/lib/rechnungsvorbereitung";
 // ersterMonat geht so an den Rechenbaustein; ab und bisVor sind die
 // Zeitpunkte als ISO-Text (Mitternacht am Ersten des ersten Monats bzw. des
 // Monats nach dem Zeitraum).
-export type RechnungsZeitraum = {
+export type GewaehlterZeitraum = {
   ersterMonat: Monat;
   bezeichnung: string;
   ab: string;
@@ -36,11 +36,11 @@ function monat(jahr: number, nummer: number, anzahl = 0): Monat {
 // gilt der letzte abgeschlossene Zeitraum: Abgerechnet wird meist zu
 // Beginn des nächsten. Quartalsweise zählt immer das ganze Kalenderquartal
 // des gewählten Monats.
-export function rechnungsZeitraum(
+export function gewaehlterZeitraum(
   wert: string | string[] | undefined,
   abrechnungszeitraum: Abrechnungszeitraum,
   jetzt: number,
-): RechnungsZeitraum {
+): GewaehlterZeitraum {
   const quartalsweise = abrechnungszeitraum === "quartalsweise";
   const [hJahr, hMonat] = berlinerDatum(jetzt).split("-").map(Number);
   const gewaehlt = typeof wert === "string" ? /^(\d{4})-(0[1-9]|1[0-2])$/.exec(wert.trim()) : null;

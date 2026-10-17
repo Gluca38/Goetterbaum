@@ -11,7 +11,7 @@ import {
   type Zeiteintrag,
 } from "@/lib/rechnungsvorbereitung";
 import { ladeKundenStundensaetze } from "@/lib/stundensaetze/verwaltung";
-import { rechnungsZeitraum, type RechnungsZeitraum } from "./zeitraum";
+import { gewaehlterZeitraum, type GewaehlterZeitraum } from "./zeitraum";
 import type { Namen } from "./zeilen";
 
 // So viele Zeilen liefert die Schnittstelle höchstens auf einmal
@@ -43,13 +43,23 @@ export type GeladeneRechnungsvorbereitung = {
   // Noch nicht freigegebene Zeiteinträge des Kunden, die im Zeitraum
   // beginnen; sie fehlen im Ergebnis.
   nichtFreigegeben: number;
+  // Einfließende Zeiteinträge, die vor dem Zeitraum beginnen. Was schon
+  // abgerechnet ist, lässt sich noch nicht markieren (#16); das Büro
+  // prüft sie deshalb selbst.
+  ausFrueherenZeitraeumen: number;
+};
+
+// Dazu Kunde und Zeitraum, wie sie aus der Adresszeile gewählt wurden.
+export type RechnungsvorbereitungAusAdresse = GeladeneRechnungsvorbereitung & {
+  kunde: Kunde;
+  zeitraum: GewaehlterZeitraum;
 };
 
 export async function ladeRechnungsvorbereitung(
   supabase: SupabaseClient,
   kunde: Kunde,
   standardDerFirma: Rundungsregel,
-  zeitraum: RechnungsZeitraum,
+  zeitraum: GewaehlterZeitraum,
 ): Promise<GeladeneRechnungsvorbereitung> {
   const rundungsregel = kunde.rundungsregel ?? standardDerFirma;
   const [objekte, taetigkeiten, kundenSaetze] = await Promise.all([
@@ -109,6 +119,9 @@ export async function ladeRechnungsvorbereitung(
     abgerechnetePauschalMonate: [],
   });
 
+  const vorDemZeitraum = new Set(
+    zeiteintraege.filter((z) => Date.parse(z.beginn) < Date.parse(zeitraum.ab)).map((z) => z.id),
+  );
   return {
     ergebnis,
     namen: {
@@ -117,6 +130,7 @@ export async function ladeRechnungsvorbereitung(
     },
     rundungsregel,
     nichtFreigegeben,
+    ausFrueherenZeitraeumen: ergebnis.zeiteintragIds.filter((id) => vorDemZeitraum.has(id)).length,
   };
 }
 
@@ -149,7 +163,7 @@ async function ladeFreigegebeneZeiteintraege(
 async function zaehleNichtFreigegebene(
   supabase: SupabaseClient,
   objektIds: string[],
-  zeitraum: RechnungsZeitraum,
+  zeitraum: GewaehlterZeitraum,
 ): Promise<number> {
   if (objektIds.length === 0) return 0;
   const { count, error } = await supabase
@@ -166,21 +180,21 @@ async function zaehleNichtFreigegebene(
 type Parameter = Record<string, string | string[] | undefined>;
 
 // Die Rechnungsvorbereitung zu Kunde und Monat aus der Adresszeile (kunde,
-// monat), dazu der Zeitraum (ohne Monat der zuletzt abgeschlossene), oder null, wenn kein Kunde gewählt ist oder
-// es ihn nicht gibt. Seite und CSV-Export laden über diese Funktion, damit
-// beide dieselben Positionen zeigen.
+// monat; ohne Monat der zuletzt abgeschlossene Zeitraum), oder null, wenn
+// kein Kunde gewählt ist oder es ihn nicht gibt. Seite und CSV-Export laden
+// über diese Funktion, damit beide dieselben Positionen zeigen.
 export async function ladeRechnungsvorbereitungAusAdresse(
   supabase: SupabaseClient,
   firmaId: string,
   parameter: Parameter,
-): Promise<(GeladeneRechnungsvorbereitung & { kunde: Kunde; zeitraum: RechnungsZeitraum }) | null> {
+): Promise<RechnungsvorbereitungAusAdresse | null> {
   const kundeId = typeof parameter.kunde === "string" ? parameter.kunde : "";
   const [kunde, firma] = await Promise.all([
     ladeKunde(supabase, kundeId),
     ladeFirma(supabase, firmaId),
   ]);
   if (!kunde) return null;
-  const zeitraum = rechnungsZeitraum(parameter.monat, kunde.abrechnungszeitraum, Date.now());
+  const zeitraum = gewaehlterZeitraum(parameter.monat, kunde.abrechnungszeitraum, Date.now());
   const geladen = await ladeRechnungsvorbereitung(supabase, kunde, firma.rundungsregel, zeitraum);
   return { ...geladen, kunde, zeitraum };
 }

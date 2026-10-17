@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { schnittstelleAls, testdaten } from "./testumgebung/hilfen";
 import {
@@ -106,7 +107,7 @@ test("Das Büro setzt die Rundungsregel eines Kunden und leert sie wieder", asyn
     .from("kunde")
     .insert({
       firma_id: firmaA.id,
-      name: "Hausverwaltung Rundung",
+      name: `Hausverwaltung ${randomUUID().slice(0, 8)}`,
       strasse: "Ringstraße 1",
       plz: "50667",
       ort: "Köln",

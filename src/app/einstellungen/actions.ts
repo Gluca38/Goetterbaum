@@ -14,7 +14,7 @@ export async function rundungsregelSpeichern(
 ): Promise<Rueckmeldung> {
   const { supabase, ich } = await alsBuero();
   const rundungsregel = String(formData.get("rundungsregel") ?? "");
-  if (!istRundungsregel(rundungsregel)) return FEHLER(texte.kunden.fehlerRundungsregel);
+  if (!istRundungsregel(rundungsregel)) return FEHLER(texte.einstellungen.fehlerRundungsregel);
 
   const { data, error } = await supabase
     .from("firma")

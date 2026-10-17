@@ -434,6 +434,10 @@ export const texte = {
         ? "Achtung: Im Zeitraum liegt 1 Zeiteintrag dieses Kunden, der noch nicht freigegeben ist. Er fehlt in der Rechnungsvorbereitung."
         : `Achtung: Im Zeitraum liegen ${anzahl} Zeiteinträge dieses Kunden, die noch nicht freigegeben sind. Sie fehlen in der Rechnungsvorbereitung.`,
     zurFreigabe: "Zur Freigabe",
+    hinweisFruehere: (anzahl: number) =>
+      anzahl === 1
+        ? "Hinweis: Enthalten ist 1 freigegebener Zeiteintrag, der vor diesem Zeitraum begonnen hat. Bitte prüfe, dass er nicht schon abgerechnet wurde."
+        : `Hinweis: Enthalten sind ${anzahl} freigegebene Zeiteinträge, die vor diesem Zeitraum begonnen haben. Bitte prüfe, dass sie nicht schon abgerechnet wurden.`,
     spaltePosition: "Position",
     spalteObjekt: "Objekt",
     spalteTaetigkeit: "Tätigkeit",
@@ -459,6 +463,7 @@ export const texte = {
     laedt: "Lädt …",
     keineBerechtigung: "Die Einstellungen der Firma darf nur das Büro ändern.",
     rundungsregel: "Standard-Rundungsregel",
+    fehlerRundungsregel: "Bitte wähle eine Rundungsregel.",
     rundungsregelHinweis:
       "Gilt für die Stundenabrechnung aller Kunden, für die keine eigene Rundungsregel festgelegt ist. Gerundet wird die Summe je Objekt, Tätigkeit und Kalendertag.",
   },

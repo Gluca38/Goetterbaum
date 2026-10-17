@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { RUNDUNGSREGELN, type Rundungsregel } from "@/lib/abrechnung";
+import { RundungsregelOptionen } from "@/app/rundungsregel-optionen";
+import type { Rundungsregel } from "@/lib/abrechnung";
 import { START } from "@/lib/rueckmeldung";
 import { texte } from "@/texte";
 import { rundungsregelSpeichern } from "./actions";
@@ -16,11 +17,7 @@ export function EinstellungenFormular({ rundungsregel }: { rundungsregel: Rundun
           {texte.einstellungen.rundungsregel}
           <br />
           <select name="rundungsregel" defaultValue={rundungsregel}>
-            {RUNDUNGSREGELN.map((regel) => (
-              <option key={regel} value={regel}>
-                {texte.rundungsregeln[regel]}
-              </option>
-            ))}
+            <RundungsregelOptionen />
           </select>
         </label>
       </p>

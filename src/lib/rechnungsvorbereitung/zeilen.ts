@@ -18,15 +18,15 @@ export type Zeile = {
   betragCent: number;
 };
 
+// Alle Zeilen und die Summe aus dem Rechenbaustein.
+export type Zeilen = { zeilen: Zeile[]; summeCent: number };
+
 export type Namen = {
   objekte: Map<string, string>;
   taetigkeiten: Map<string, string>;
 };
 
-export function rechnungsZeilen(
-  ergebnis: Rechnungsvorbereitung,
-  namen: Namen,
-): { zeilen: Zeile[]; summeCent: number } {
+export function rechnungsZeilen(ergebnis: Rechnungsvorbereitung, namen: Namen): Zeilen {
   const t = texte.rechnungsvorbereitung;
   const name = (liste: Map<string, string>, id: string) => liste.get(id) ?? t.unbekannt;
 

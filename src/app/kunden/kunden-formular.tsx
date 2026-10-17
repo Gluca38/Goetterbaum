@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import { AdressFelder } from "@/app/adress-felder";
-import { ABRECHNUNGSZEITRAEUME, RUNDUNGSREGELN, type Rundungsregel } from "@/lib/abrechnung";
+import { RundungsregelOptionen } from "@/app/rundungsregel-optionen";
+import { ABRECHNUNGSZEITRAEUME, type Rundungsregel } from "@/lib/abrechnung";
 import type { KundenDaten } from "@/lib/kunden/eingabe";
 import { START, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { texte } from "@/texte";
@@ -59,11 +60,7 @@ export function KundenFormular({
             <option value="">
               {texte.rundungsregelDerFirma(texte.rundungsregeln[standardDerFirma])}
             </option>
-            {RUNDUNGSREGELN.map((regel) => (
-              <option key={regel} value={regel}>
-                {texte.rundungsregeln[regel]}
-              </option>
-            ))}
+            <RundungsregelOptionen />
           </select>
         </label>
       </p>

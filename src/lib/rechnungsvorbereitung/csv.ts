@@ -4,15 +4,9 @@
 // damit Excel mit ihnen rechnen kann.
 import { euroAlsEingabe } from "@/lib/geld";
 import { texte } from "@/texte";
-import { stundenAlsText, type Zeile } from "./zeilen";
+import { stundenAlsText, type Zeilen } from "./zeilen";
 
-export function rechnungsCsv({
-  zeilen,
-  summeCent,
-}: {
-  zeilen: Zeile[];
-  summeCent: number;
-}): string {
+export function rechnungsCsv({ zeilen, summeCent }: Zeilen): string {
   const t = texte.rechnungsvorbereitung;
   const kopf = [
     t.spaltePosition,
