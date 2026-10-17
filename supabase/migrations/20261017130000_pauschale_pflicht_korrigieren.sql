@@ -7,9 +7,13 @@
 --
 -- Ein einziger Befehl, damit die alte Regel nie ohne die neue wegfällt.
 
+begin;
+
 alter table public.objekt
   drop constraint pauschale_nur_bei_pauschale,
   add constraint pauschale_nur_bei_pauschale check (
     (abrechnungsart = 'pauschale' and pauschale_cent is not null and pauschale_cent > 0)
     or (abrechnungsart = 'stunden' and pauschale_cent is null)
   );
+
+commit;

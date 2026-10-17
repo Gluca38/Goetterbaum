@@ -5,6 +5,8 @@
 -- wieder aktiviert werden. Mitarbeiter und Vorarbeiter haben vorerst keinen
 -- Zugriff; das Lesen der Objekte kommt mit der Zeiterfassung.
 
+begin;
+
 create type public.abrechnungszeitraum as enum ('monatlich', 'quartalsweise');
 create type public.abrechnungsart as enum ('pauschale', 'stunden');
 
@@ -214,3 +216,5 @@ create policy "Büro ändert Objekte der eigenen Firma"
     firma_id = (select privat.meine_firma_id())
     and (select privat.meine_rolle()) = 'buero'
   );
+
+commit;
