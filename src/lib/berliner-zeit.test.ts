@@ -28,6 +28,14 @@ test("Am Tag der Zeitumstellung gilt vor und nach der Umstellung die jeweilige Z
   );
 });
 
+test("Eine Uhrzeit, die es wegen der Zeitumstellung zweimal gibt, gilt beim zweiten Mal", () => {
+  // Am 25.10.2026 gibt es 02:00 bis 03:00 zweimal: erst in Sommerzeit,
+  // dann in Winterzeit. Gemeint ist das zweite Mal (UTC + 1 Stunde).
+  expect(new Date(berlinerZeitpunkt("2026-10-25", "02:30")).toISOString()).toBe(
+    "2026-10-25T01:30:00.000Z",
+  );
+});
+
 test("Die Uhrzeit in Berlin zu einem Zeitpunkt, als Stunden und Minuten", () => {
   expect(berlinerUhrzeit(Date.parse("2026-10-16T06:15:00Z"))).toBe("08:15");
   expect(berlinerUhrzeit(Date.parse("2026-12-01T22:59:00Z"))).toBe("23:59");
