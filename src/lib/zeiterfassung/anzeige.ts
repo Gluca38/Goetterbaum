@@ -90,6 +90,21 @@ export function laeuftSeit(beginn: string, jetzt: number): string {
   return `${tagesTitel.format(zeitpunkt)}, ${um}`;
 }
 
+// Nach wie vielen Stunden ein laufender Eintrag als unvollständig gilt.
+// Dieselbe Grenze steht in der Datenbank (privat.zeiteintrag_unvollstaendig).
+export const UNVOLLSTAENDIG_NACH_STUNDEN = 12;
+
+// Ein Eintrag, der länger als 12 Stunden läuft, ist unvollständig: Der
+// Stopp wurde wohl vergessen. Das ergibt sich aus der Laufzeit und wird
+// nicht gespeichert; beendet wird er nie von selbst.
+export function istUnvollstaendig(
+  eintrag: Pick<MeinZeiteintrag, "beginn" | "ende">,
+  jetzt: number,
+): boolean {
+  if (eintrag.ende !== null) return false;
+  return jetzt - Date.parse(eintrag.beginn) > UNVOLLSTAENDIG_NACH_STUNDEN * 60 * 60 * 1000;
+}
+
 // Wie viele Kalendertage die Liste der eigenen Einträge zeigt (heute
 // eingeschlossen).
 export const ANGEZEIGTE_TAGE = 7;

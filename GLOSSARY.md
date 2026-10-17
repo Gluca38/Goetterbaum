@@ -59,6 +59,10 @@ _Avoid_: Leistung, Aufgabe, Service
 **Live-Erfassung**:
 Ein Zeiteintrag, der vor Ort per Start und Stopp entsteht. Der Normalfall.
 
+**Unvollständiger Zeiteintrag**:
+Ein Zeiteintrag, der seit mehr als 12 Stunden läuft, weil der Stopp vergessen wurde. Ergibt sich aus der Laufzeit und wird nicht gespeichert. Er wird nie automatisch beendet, sondern durch Angabe des richtigen Endes korrigiert und ist danach ein Nachtrag. Das Büro sieht alle auf der Prüfliste.
+_Avoid_: offener Eintrag, hängender Eintrag
+
 **Nachtrag**:
 Ein Zeiteintrag, der nachträglich eingetragen oder geändert wurde und deshalb sichtbar als solcher markiert ist.
 _Avoid_: Korrektur, manuelle Buchung

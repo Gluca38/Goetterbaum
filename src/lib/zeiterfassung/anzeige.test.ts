@@ -1,5 +1,12 @@
 import { expect, test } from "vitest";
-import { angelegtVon, angezeigtAb, laeuftSeit, nachTagen, type MeinZeiteintrag } from "./anzeige";
+import {
+  angelegtVon,
+  angezeigtAb,
+  istUnvollstaendig,
+  laeuftSeit,
+  nachTagen,
+  type MeinZeiteintrag,
+} from "./anzeige";
 
 const ICH = "0b7c3a52-9d1e-4f6a-8c2b-1e5d7f9a3c41";
 const VORARBEITER = "5e2f8b14-3a6c-4d9e-b7f1-2c8a4e6d0b93";
@@ -89,4 +96,25 @@ test("Wer für einen Mitarbeiter erfasst hat, steht nur dabei, wenn er es nicht 
 
   expect(angelegtVon(selbst, ICH)).toBeNull();
   expect(angelegtVon(fuerIhn, ICH)).toBe("Angelegt von Marek Nowak");
+});
+
+test("Ein Eintrag, der seit mehr als 12 Stunden läuft, ist unvollständig", () => {
+  // Beginn Do., 15.10., 18:42:17 in Berlin.
+  const beginn = "2026-10-15T16:42:17Z";
+  expect(istUnvollstaendig({ beginn, ende: null }, Date.parse("2026-10-16T04:42:17Z"))).toBe(false);
+  expect(istUnvollstaendig({ beginn, ende: null }, Date.parse("2026-10-16T04:42:18Z"))).toBe(true);
+});
+
+test("Ein beendeter Eintrag ist nie unvollständig, auch wenn er lang war", () => {
+  const eintrag = { beginn: "2026-10-15T04:00:00Z", ende: "2026-10-15T18:30:00Z" };
+  expect(istUnvollstaendig(eintrag, Date.parse("2026-10-16T12:00:00Z"))).toBe(false);
+});
+
+test("Die 12 Stunden gelten auch über die Zeitumstellung hinweg als echte Stunden", () => {
+  // Am 25.10.2026 um 03:00 werden die Uhren in Berlin auf 02:00 zurückgestellt.
+  // Beginn Sa., 24.10., 20:15 Sommerzeit; zwölf echte Stunden später ist es
+  // So., 25.10., 07:15 Winterzeit.
+  const beginn = "2026-10-24T18:15:00Z";
+  expect(istUnvollstaendig({ beginn, ende: null }, Date.parse("2026-10-25T06:14:59Z"))).toBe(false);
+  expect(istUnvollstaendig({ beginn, ende: null }, Date.parse("2026-10-25T06:15:01Z"))).toBe(true);
 });

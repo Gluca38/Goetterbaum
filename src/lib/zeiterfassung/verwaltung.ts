@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istId } from "@/lib/id";
 import type { Sparte } from "@/lib/sparte";
-import { angezeigtAb, type MeinZeiteintrag, type ZeiteintragArt } from "./anzeige";
+import {
+  angezeigtAb,
+  istUnvollstaendig,
+  type MeinZeiteintrag,
+  type ZeiteintragArt,
+} from "./anzeige";
 import { protokollAnzeigen, type AngezeigteProtokollZeile, type ProtokollZeile } from "./protokoll";
 
 // Was ein Mitarbeiter beim Start sieht. Preise und Kunden liefern die
@@ -84,7 +89,8 @@ export async function ladeMitarbeiterZumErfassen(
 
 // Ein Zeiteintrag mit allem, was zum Ändern nötig ist, oder null, wenn es
 // ihn nicht gibt oder der angemeldete Nutzer ihn nicht sehen darf (normale
-// Mitarbeiter sehen nur ihre eigenen).
+// Mitarbeiter sehen nur ihre eigenen). unvollstaendig: Er läuft seit mehr
+// als 12 Stunden, zum Zeitpunkt des Ladens.
 export type ZeiteintragZumAendern = {
   id: string;
   mitarbeiter_id: string;
@@ -93,6 +99,7 @@ export type ZeiteintragZumAendern = {
   taetigkeit_id: string | null;
   beginn: string;
   ende: string | null;
+  unvollstaendig: boolean;
 };
 
 export async function ladeZeiteintragZumAendern(
@@ -104,9 +111,9 @@ export async function ladeZeiteintragZumAendern(
     .from("zeiteintrag")
     .select("id, mitarbeiter_id, art, objekt_id, taetigkeit_id, beginn, ende")
     .eq("id", id)
-    .maybeSingle<ZeiteintragZumAendern>();
+    .maybeSingle<Omit<ZeiteintragZumAendern, "unvollstaendig">>();
   if (error) throw error;
-  return data;
+  return data && { ...data, unvollstaendig: istUnvollstaendig(data, Date.now()) };
 }
 
 // Ein Zeiteintrag, wie ihn das Büro in der Übersicht sieht.
@@ -115,15 +122,31 @@ export type ZeiteintragDerFirma = Omit<MeinZeiteintrag, "angelegt_von"> & {
 };
 
 // Fürs Büro: alle Zeiteinträge der Firma in den angezeigten Tagen und alle
-// laufenden, der neueste zuerst.
+// laufenden, der neueste zuerst, dazu der Zeitpunkt, zu dem geladen wurde.
 export async function ladeZeiteintraegeDerFirma(
   supabase: SupabaseClient,
-): Promise<ZeiteintragDerFirma[]> {
+): Promise<{ eintraege: ZeiteintragDerFirma[]; jetzt: number }> {
+  const jetzt = Date.now();
   const { data, error } = await supabase.rpc("zeiteintraege_der_firma", {
-    ab: angezeigtAb(Date.now()),
+    ab: angezeigtAb(jetzt),
   });
   if (error) throw error;
-  return data;
+  return { eintraege: data, jetzt };
+}
+
+// Fürs Büro: die Prüfliste aller unvollständigen Zeiteinträge der Firma,
+// der älteste zuerst. Mit "ab" = unendlich liefert die Datenbank nur die
+// laufenden.
+export async function ladeUnvollstaendigeEintraege(
+  supabase: SupabaseClient,
+): Promise<{ eintraege: ZeiteintragDerFirma[]; jetzt: number }> {
+  const jetzt = Date.now();
+  const { data, error } = await supabase
+    .rpc("zeiteintraege_der_firma", { ab: "infinity" })
+    .order("beginn");
+  if (error) throw error;
+  const laufende: ZeiteintragDerFirma[] = data;
+  return { eintraege: laufende.filter((e) => istUnvollstaendig(e, jetzt)), jetzt };
 }
 
 // Fürs Büro: ein Zeiteintrag der Firma mit seinem aufbereiteten

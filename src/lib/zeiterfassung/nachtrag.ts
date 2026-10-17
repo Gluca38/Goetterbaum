@@ -82,3 +82,24 @@ export function pruefeNachtragEingabe(
     },
   };
 }
+
+export type EndeErgebnis = { ok: true; ende: string } | { ok: false; fehler: string };
+
+// Prüft das nachgetragene Ende eines unvollständigen Eintrags: Datum und
+// Uhrzeit in Berlin. Anders als beim Nachtrag darf das Ende an einem
+// späteren Tag liegen als der Beginn, denn der Eintrag lief schon über
+// Mitternacht. beginn ist der gespeicherte Beginn, jetzt der aktuelle
+// Zeitpunkt (ms seit 1970).
+export function pruefeEndeEingabe(formData: FormData, jetzt: number, beginn: string): EndeErgebnis {
+  const feld = (name: string) => String(formData.get(name) ?? "").trim();
+  const t = texte.nachtrag;
+  const datum = feld("datum");
+  const bis = feld("bis");
+  if (!istDatum(datum)) return { ok: false, fehler: t.fehlerDatum };
+  if (!UHRZEIT.test(bis)) return { ok: false, fehler: t.fehlerUhrzeitEnde };
+
+  const ende = berlinerZeitpunkt(datum, bis);
+  if (ende <= Date.parse(beginn)) return { ok: false, fehler: t.fehlerEndeNachBeginn };
+  if (ende > jetzt) return { ok: false, fehler: t.fehlerZukunft };
+  return { ok: true, ende: new Date(ende).toISOString() };
+}
