@@ -150,17 +150,6 @@ test("Nur das Büro der eigenen Firma rechnet ab; wann und von wem setzt die Dat
     .update({ abgerechnet_in: null })
     .eq("id", kunde.freigegebene[0]);
   expect(verweis.error?.code).toBe("42501");
-  // Auch der Dienstschlüssel setzt den Verweis nicht selbst.
-  for (const [wert, id] of [
-    [null, kunde.freigegebene[0]],
-    [kunde.kundeId, kunde.offen],
-  ] as const) {
-    const { error } = await dienstZugang()!
-      .from("zeiteintrag")
-      .update({ abgerechnet_in: wert })
-      .eq("id", id);
-    expect(error?.code).toBe("42501");
-  }
 
   const { data: id, error } = await markiere(alsBuero, kunde);
   expect(error).toBeNull();
@@ -176,6 +165,20 @@ test("Nur das Büro der eigenen Firma rechnet ab; wann und von wem setzt die Dat
   expect(Math.abs(Date.parse(abrechnung.abgerechnet_am) - Date.now())).toBeLessThan(
     UHR_SPIELRAUM_MS,
   );
+  expect(await abgerechnetIn([...kunde.freigegebene, kunde.offen])).toEqual([id, id, null]);
+
+  // Auch der Dienstschlüssel leert oder setzt den Verweis nicht selbst,
+  // an den Funktionen vorbei.
+  for (const [wert, eintrag] of [
+    [null, kunde.freigegebene[0]],
+    [id, kunde.offen],
+  ] as const) {
+    const { error } = await dienstZugang()!
+      .from("zeiteintrag")
+      .update({ abgerechnet_in: wert })
+      .eq("id", eintrag);
+    expect(error?.code, eintrag).toBe("42501");
+  }
   expect(await abgerechnetIn([...kunde.freigegebene, kunde.offen])).toEqual([id, id, null]);
 
   const { data: monate } = await dienstZugang()!
