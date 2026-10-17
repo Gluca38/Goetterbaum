@@ -28,6 +28,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      # Einheitliche Formatierung (Prettier); beheben mit npm run format
+      - run: npm run format:check
 
   unit-tests:
     name: Unit-Tests

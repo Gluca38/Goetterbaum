@@ -29,9 +29,7 @@ function ausZeile(zeile: Zeile): Mitarbeiter {
 
 // Alle Mitarbeiter, die der angemeldete Nutzer sehen darf. Welche das sind,
 // entscheiden die Zugriffsregeln der Datenbank (nur die eigene Firma).
-export async function ladeMitarbeiterliste(
-  supabase: SupabaseClient,
-): Promise<Mitarbeiter[]> {
+export async function ladeMitarbeiterliste(supabase: SupabaseClient): Promise<Mitarbeiter[]> {
   const { data, error } = await supabase
     .from("mitarbeiter")
     .select(SPALTEN)

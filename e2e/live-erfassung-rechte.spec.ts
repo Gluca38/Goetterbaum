@@ -49,7 +49,12 @@ test("Ein Mitarbeiter startet und stoppt nur eigene Zeiteinträge, und die Daten
   const kollege = await legeEigenenZugangAn(firmaA.id);
   const { objektId, taetigkeitId } = await auswahl(firmaA.id);
   const supabase = await schnittstelleAls(ich);
-  const start = { firma_id: firmaA.id, art: "taetigkeit", objekt_id: objektId, taetigkeit_id: taetigkeitId };
+  const start = {
+    firma_id: firmaA.id,
+    art: "taetigkeit",
+    objekt_id: objektId,
+    taetigkeit_id: taetigkeitId,
+  };
 
   // Beginn und angelegt_von lassen sich nicht selbst setzen.
   const mitBeginn = await supabase
@@ -166,8 +171,16 @@ test("Gestartet wird nur mit aktivem Objekt und aktiver Tätigkeit der eigenen F
   const supabase = await schnittstelleAls(ich);
 
   const versuche: [string, Record<string, unknown>, string][] = [
-    ["archiviertes Objekt", { objekt_id: archiviert.objektId, taetigkeit_id: aktiv.taetigkeitId }, "23514"],
-    ["archivierte Tätigkeit", { objekt_id: aktiv.objektId, taetigkeit_id: archiviert.taetigkeitId }, "23514"],
+    [
+      "archiviertes Objekt",
+      { objekt_id: archiviert.objektId, taetigkeit_id: aktiv.taetigkeitId },
+      "23514",
+    ],
+    [
+      "archivierte Tätigkeit",
+      { objekt_id: aktiv.objektId, taetigkeit_id: archiviert.taetigkeitId },
+      "23514",
+    ],
     ["fremdes Objekt", { objekt_id: fremd.objektId, taetigkeit_id: aktiv.taetigkeitId }, "23503"],
     ["fremde Tätigkeit", { objekt_id: aktiv.objektId, taetigkeit_id: fremd.taetigkeitId }, "23503"],
     ["ohne Tätigkeit", { objekt_id: aktiv.objektId }, "23514"],
@@ -222,9 +235,14 @@ test("Zur Auswahl gibt es nur aktive Objekte und Tätigkeiten der eigenen Firma,
   expect(objektIds).toContain(aktiv.objektId);
   expect(objektIds).not.toContain(archiviert.objektId);
   expect(objektIds).not.toContain(fremd.objektId);
-  expect(Object.keys(objekte[0]).sort()).toEqual(
-    ["adresszusatz", "bezeichnung", "id", "ort", "plz", "strasse"],
-  );
+  expect(Object.keys(objekte[0]).sort()).toEqual([
+    "adresszusatz",
+    "bezeichnung",
+    "id",
+    "ort",
+    "plz",
+    "strasse",
+  ]);
 
   const { data: taetigkeiten } = await supabase.rpc("taetigkeiten_zur_auswahl");
   const taetigkeitIds = taetigkeiten.map((t: { id: string }) => t.id);

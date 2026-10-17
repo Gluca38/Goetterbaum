@@ -3,13 +3,7 @@ import { texte } from "@/texte";
 
 // Die Felder einer Anschrift (Straße, Zusatz, PLZ, Ort) unter einer
 // gemeinsamen Überschrift, für Kunden- wie Objekt-Formular.
-export function AdressFelder({
-  titel,
-  vorgabe,
-}: {
-  titel: string;
-  vorgabe?: Partial<Adresse>;
-}) {
+export function AdressFelder({ titel, vorgabe }: { titel: string; vorgabe?: Partial<Adresse> }) {
   return (
     <fieldset>
       <legend>{titel}</legend>

@@ -9,9 +9,7 @@ const SPALTEN = "id, name, sparte, standard_stundensatz_cent, archiviert";
 // Alle Tätigkeiten, die der angemeldete Nutzer sehen darf, auch
 // archivierte. Welche das sind, entscheiden die Zugriffsregeln der
 // Datenbank (nur das Büro der eigenen Firma).
-export async function ladeTaetigkeitenliste(
-  supabase: SupabaseClient,
-): Promise<Taetigkeit[]> {
+export async function ladeTaetigkeitenliste(supabase: SupabaseClient): Promise<Taetigkeit[]> {
   const { data, error } = await supabase
     .from("taetigkeit")
     .select(SPALTEN)

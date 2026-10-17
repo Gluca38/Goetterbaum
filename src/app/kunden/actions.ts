@@ -46,10 +46,7 @@ export async function kundeSpeichern(
   const eingabe = pruefeKundenEingabe(formData);
   if (!eingabe.ok) return FEHLER(eingabe.fehler);
 
-  const { error } = await supabase
-    .from("kunde")
-    .update(eingabe.daten)
-    .eq("id", id);
+  const { error } = await supabase.from("kunde").update(eingabe.daten).eq("id", id);
   if (error) {
     console.error("Kunde speichern fehlgeschlagen", error);
     return FEHLER(texte.stammdaten.fehlerUnbekannt);
@@ -61,18 +58,12 @@ export async function kundeSpeichern(
 
 // Archiviert einen Kunden samt seinen Objekten (das übernimmt die
 // Datenbank) oder aktiviert ihn wieder, ohne seine Objekte.
-export async function kundeArchivieren(
-  id: string,
-  archiviert: boolean,
-): Promise<Rueckmeldung> {
+export async function kundeArchivieren(id: string, archiviert: boolean): Promise<Rueckmeldung> {
   const { supabase } = await alsBuero();
   const bestand = await ladeKunde(supabase, id);
   if (!bestand) return FEHLER(texte.kunden.nichtGefunden);
 
-  const { error } = await supabase
-    .from("kunde")
-    .update({ archiviert })
-    .eq("id", id);
+  const { error } = await supabase.from("kunde").update({ archiviert }).eq("id", id);
   if (error) {
     console.error("Kunde archivieren fehlgeschlagen", error);
     return FEHLER(texte.stammdaten.fehlerUnbekannt);

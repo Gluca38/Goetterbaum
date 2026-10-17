@@ -50,7 +50,8 @@ test("Ohne E-Mail wird der Mitarbeiter ohne Zugang angelegt", () => {
 });
 
 test("Eine unbekannte Rolle wird abgelehnt", () => {
-  expect(
-    pruefeMitarbeiterEingabe(formular({ name: "Maria", email: "", rolle: "chef" })),
-  ).toEqual({ ok: false, fehler: "Bitte wähle eine Rolle." });
+  expect(pruefeMitarbeiterEingabe(formular({ name: "Maria", email: "", rolle: "chef" }))).toEqual({
+    ok: false,
+    fehler: "Bitte wähle eine Rolle.",
+  });
 });

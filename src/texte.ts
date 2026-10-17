@@ -14,10 +14,8 @@ export const texte = {
     knopfLaeuft: "Anmeldung läuft …",
     passwortVergessen: "Passwort vergessen?",
     fehlerFalsch: "E-Mail oder Passwort ist falsch.",
-    fehlerDeaktiviert:
-      "Dieser Zugang ist deaktiviert. Bitte wende dich an das Büro.",
-    fehlerUnbekannt:
-      "Die Anmeldung hat nicht geklappt. Bitte versuche es noch einmal.",
+    fehlerDeaktiviert: "Dieser Zugang ist deaktiviert. Bitte wende dich an das Büro.",
+    fehlerUnbekannt: "Die Anmeldung hat nicht geklappt. Bitte versuche es noch einmal.",
     fehlerLink:
       "Dieser Link ist ungültig oder abgelaufen. Bitte fordere über „Passwort vergessen?“ einen neuen an oder wende dich an das Büro.",
   },
@@ -51,10 +49,8 @@ export const texte = {
     knopfLaeuft: "Wird gespeichert …",
     fehlerZuKurz: "Das Passwort muss mindestens 8 Zeichen lang sein.",
     fehlerUngleich: "Die beiden Passwörter stimmen nicht überein.",
-    fehlerGleich:
-      "Das ist dein bisheriges Passwort. Bitte wähle ein neues.",
-    fehlerUnbekannt:
-      "Das Passwort konnte nicht gespeichert werden. Bitte versuche es noch einmal.",
+    fehlerGleich: "Das ist dein bisheriges Passwort. Bitte wähle ein neues.",
+    fehlerUnbekannt: "Das Passwort konnte nicht gespeichert werden. Bitte versuche es noch einmal.",
   },
   mitarbeiter: {
     titel: "Mitarbeiter",
@@ -104,8 +100,7 @@ export const texte = {
       verschickt: (email: string) => `Einladung an ${email} verschickt.`,
       fehlerEinladungGeoeffnet:
         "Dieser Mitarbeiter hat die Einladung bereits geöffnet. Er kann sich auf der Anmeldeseite über „Passwort vergessen“ selbst einen neuen Link schicken.",
-      fehlerEmailVergeben:
-        "Für diese E-Mail-Adresse gibt es bereits einen anderen Zugang.",
+      fehlerEmailVergeben: "Für diese E-Mail-Adresse gibt es bereits einen anderen Zugang.",
       fehlerZuVieleMails:
         "Es wurden gerade zu viele E-Mails verschickt. Bitte versuche es später noch einmal.",
       fehlerUnbekannt:
@@ -155,8 +150,7 @@ export const texte = {
     abrechnungsart: "Abrechnungsart",
     pauschale: "Pauschale pro Monat in Euro",
     pauschaleProMonat: (betrag: string) => `Pauschale ${betrag} pro Monat`,
-    keineAktivenKunden:
-      "Es gibt noch keinen aktiven Kunden. Lege zuerst einen Kunden an.",
+    keineAktivenKunden: "Es gibt noch keinen aktiven Kunden. Lege zuerst einen Kunden an.",
     archiviertHinweis:
       "Dieses Objekt ist archiviert. Es erscheint in keiner Auswahlliste mehr; seine Daten bleiben erhalten.",
     archivierenHinweis:
@@ -165,12 +159,10 @@ export const texte = {
     fehlerKunde: "Bitte wähle einen Kunden.",
     fehlerAbrechnungsart: "Bitte wähle eine Abrechnungsart.",
     fehlerPauschaleFehlt: "Bitte gib die Pauschale pro Monat ein.",
-    fehlerPauschaleUngueltig:
-      "Die Pauschale ist kein gültiger Betrag. Beispiel: 1.250,00",
+    fehlerPauschaleUngueltig: "Die Pauschale ist kein gültiger Betrag. Beispiel: 1.250,00",
     fehlerPauschaleBeiStunden:
       "Bei Stundenabrechnung gibt es keine Pauschale. Bitte lass das Feld leer.",
-    fehlerKundeArchiviert:
-      "Der Kunde dieses Objekts ist archiviert. Aktiviere zuerst den Kunden.",
+    fehlerKundeArchiviert: "Der Kunde dieses Objekts ist archiviert. Aktiviere zuerst den Kunden.",
   },
   taetigkeiten: {
     titel: "Tätigkeiten",
@@ -216,8 +208,7 @@ export const texte = {
     entfernen: "Entfernen",
     entfernenLaeuft: "Wird entfernt …",
     fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",
-    fehlerTaetigkeitArchiviert:
-      "Diese Tätigkeit ist archiviert. Aktiviere sie zuerst wieder.",
+    fehlerTaetigkeitArchiviert: "Diese Tätigkeit ist archiviert. Aktiviere sie zuerst wieder.",
     fehlerStundensatz: "Der Stundensatz ist kein gültiger Betrag. Beispiel: 32,50",
   },
   erfassung: {
@@ -241,8 +232,7 @@ export const texte = {
     vonBis: (von: string, bis: string) => `${von}–${bis}`,
     fehlerObjekt: "Bitte wähle ein Objekt.",
     fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",
-    fehlerLaeuftSchon:
-      "Es läuft schon ein Zeiteintrag. Stoppe ihn, bevor du einen neuen startest.",
+    fehlerLaeuftSchon: "Es läuft schon ein Zeiteintrag. Stoppe ihn, bevor du einen neuen startest.",
     fehlerLaeuftNichts: "Es läuft kein Zeiteintrag mehr.",
     fehlerNichtZurAuswahl:
       "Dieses Objekt oder diese Tätigkeit steht nicht mehr zur Auswahl. Bitte lade die Seite neu.",

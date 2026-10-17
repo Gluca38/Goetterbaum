@@ -55,11 +55,7 @@ async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
       <AktionsKnopf
         key={String(taetigkeit.archiviert)}
         aktion={taetigkeitArchivieren.bind(null, taetigkeit.id, !taetigkeit.archiviert)}
-        knopf={
-          taetigkeit.archiviert
-            ? texte.stammdaten.aktivieren
-            : texte.stammdaten.archivieren
-        }
+        knopf={taetigkeit.archiviert ? texte.stammdaten.aktivieren : texte.stammdaten.archivieren}
         knopfLaeuft={texte.stammdaten.speichernLaeuft}
       />
 

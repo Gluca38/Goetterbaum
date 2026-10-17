@@ -13,9 +13,7 @@ export type ObjektDaten = Adresse & {
   pauschale_cent: number | null;
 };
 
-export type EingabeErgebnis =
-  | { ok: true; daten: ObjektDaten }
-  | { ok: false; fehler: string };
+export type EingabeErgebnis = { ok: true; daten: ObjektDaten } | { ok: false; fehler: string };
 
 // Größter Betrag, den die Datenbank-Spalte pauschale_cent (integer)
 // aufnehmen kann: 21.474.836,47 €.

@@ -25,10 +25,7 @@ export async function ladeObjektliste(
   return data;
 }
 
-export async function ladeObjekt(
-  supabase: SupabaseClient,
-  id: string,
-): Promise<Objekt | null> {
+export async function ladeObjekt(supabase: SupabaseClient, id: string): Promise<Objekt | null> {
   if (!istId(id)) return null;
   const { data, error } = await supabase
     .from("objekt")

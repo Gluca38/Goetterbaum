@@ -151,10 +151,7 @@ for (const rolle of ["mitarbeiter", "vorarbeiter"] as const) {
     page,
   }) => {
     const daten = testdaten();
-    const { kundeId, objektId } = await legeKundeMitObjektAn(
-      dienstZugang()!,
-      daten.firmaA.id,
-    );
+    const { kundeId, objektId } = await legeKundeMitObjektAn(dienstZugang()!, daten.firmaA.id);
 
     await meldeAn(page, daten.firmaA[rolle]);
     await erwarteAngemeldet(page, daten.firmaA[rolle].name);
@@ -170,9 +167,7 @@ for (const rolle of ["mitarbeiter", "vorarbeiter"] as const) {
       `/objekte/${objektId}`,
     ]) {
       await page.goto(pfad);
-      await expect(
-        page.getByText("Kunden und Objekte verwalten darf nur das Büro."),
-      ).toBeVisible();
+      await expect(page.getByText("Kunden und Objekte verwalten darf nur das Büro.")).toBeVisible();
     }
   });
 }

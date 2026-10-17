@@ -32,11 +32,7 @@ async function Liste() {
       <p>
         <Link href="/taetigkeiten/neu">{texte.taetigkeiten.neu}</Link>
       </p>
-      {aktive.length === 0 ? (
-        <p>{texte.taetigkeiten.keine}</p>
-      ) : (
-        <Tabelle taetigkeiten={aktive} />
-      )}
+      {aktive.length === 0 ? <p>{texte.taetigkeiten.keine}</p> : <Tabelle taetigkeiten={aktive} />}
       {archivierte.length > 0 && (
         <>
           <h2>{texte.taetigkeiten.archivierteTitel}</h2>

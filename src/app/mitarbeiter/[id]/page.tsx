@@ -10,9 +10,7 @@ import { AktionsKnopf } from "@/app/aktions-knopf";
 import { MitarbeiterFormular } from "../mitarbeiter-formular";
 import { NurFuerBuero } from "@/app/nur-fuer-buero";
 
-export default function MitarbeiterBearbeiten({
-  params,
-}: PageProps<"/mitarbeiter/[id]">) {
+export default function MitarbeiterBearbeiten({ params }: PageProps<"/mitarbeiter/[id]">) {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -74,11 +72,7 @@ async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
       <AktionsKnopf
         key={String(mitarbeiter.aktiv)}
         aktion={aktivSetzen.bind(null, mitarbeiter.id, !mitarbeiter.aktiv)}
-        knopf={
-          mitarbeiter.aktiv
-            ? texte.mitarbeiter.deaktivieren
-            : texte.mitarbeiter.aktivieren
-        }
+        knopf={mitarbeiter.aktiv ? texte.mitarbeiter.deaktivieren : texte.mitarbeiter.aktivieren}
         knopfLaeuft={texte.mitarbeiter.speichernLaeuft}
       />
 

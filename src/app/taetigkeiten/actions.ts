@@ -51,10 +51,7 @@ export async function taetigkeitSpeichern(
   const eingabe = pruefeTaetigkeitsEingabe(formData);
   if (!eingabe.ok) return FEHLER(eingabe.fehler);
 
-  const { error } = await supabase
-    .from("taetigkeit")
-    .update(eingabe.daten)
-    .eq("id", id);
+  const { error } = await supabase.from("taetigkeit").update(eingabe.daten).eq("id", id);
   if (error) return fehlerBeimSpeichern("speichern", error);
 
   refresh();
@@ -69,10 +66,7 @@ export async function taetigkeitArchivieren(
   const bestand = await ladeTaetigkeit(supabase, id);
   if (!bestand) return FEHLER(texte.taetigkeiten.nichtGefunden);
 
-  const { error } = await supabase
-    .from("taetigkeit")
-    .update({ archiviert })
-    .eq("id", id);
+  const { error } = await supabase.from("taetigkeit").update({ archiviert }).eq("id", id);
   if (error) return fehlerBeimSpeichern("archivieren", error);
 
   refresh();

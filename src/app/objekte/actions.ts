@@ -66,10 +66,7 @@ export async function objektSpeichern(
   );
   if (regelverstoss) return FEHLER(regelverstoss);
 
-  const { error } = await supabase
-    .from("objekt")
-    .update(eingabe.daten)
-    .eq("id", id);
+  const { error } = await supabase.from("objekt").update(eingabe.daten).eq("id", id);
   if (error) {
     console.error("Objekt speichern fehlgeschlagen", error);
     return FEHLER(texte.stammdaten.fehlerUnbekannt);
@@ -79,10 +76,7 @@ export async function objektSpeichern(
   return OK(texte.stammdaten.gespeichert);
 }
 
-export async function objektArchivieren(
-  id: string,
-  archiviert: boolean,
-): Promise<Rueckmeldung> {
+export async function objektArchivieren(id: string, archiviert: boolean): Promise<Rueckmeldung> {
   const { supabase } = await alsBuero();
   const bestand = await ladeObjekt(supabase, id);
   if (!bestand) return FEHLER(texte.objekte.nichtGefunden);
@@ -90,10 +84,7 @@ export async function objektArchivieren(
   const regelverstoss = pruefeObjektAktiv({ archiviert }, bestand.kunde);
   if (regelverstoss) return FEHLER(regelverstoss);
 
-  const { error } = await supabase
-    .from("objekt")
-    .update({ archiviert })
-    .eq("id", id);
+  const { error } = await supabase.from("objekt").update({ archiviert }).eq("id", id);
   if (error) {
     console.error("Objekt archivieren fehlgeschlagen", error);
     return FEHLER(texte.stammdaten.fehlerUnbekannt);

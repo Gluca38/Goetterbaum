@@ -9,9 +9,7 @@ export type TaetigkeitsDaten = {
   standard_stundensatz_cent: number;
 };
 
-export type EingabeErgebnis =
-  | { ok: true; daten: TaetigkeitsDaten }
-  | { ok: false; fehler: string };
+export type EingabeErgebnis = { ok: true; daten: TaetigkeitsDaten } | { ok: false; fehler: string };
 
 // Prüft die Angaben aus dem Tätigkeits-Formular und bringt sie in eine
 // einheitliche Form.

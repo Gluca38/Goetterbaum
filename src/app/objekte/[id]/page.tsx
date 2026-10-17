@@ -50,8 +50,7 @@ async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
     <>
       <h2>{objekt.bezeichnung}</h2>
       <p>
-        {texte.objekte.kunde}:{" "}
-        <Link href={`/kunden/${objekt.kunde_id}`}>{objekt.kunde.name}</Link>
+        {texte.objekte.kunde}: <Link href={`/kunden/${objekt.kunde_id}`}>{objekt.kunde.name}</Link>
         {" · "}
         {abrechnungAlsText(objekt)}
       </p>
@@ -71,9 +70,7 @@ async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
       <AktionsKnopf
         key={String(objekt.archiviert)}
         aktion={objektArchivieren.bind(null, objekt.id, !objekt.archiviert)}
-        knopf={
-          objekt.archiviert ? texte.stammdaten.aktivieren : texte.stammdaten.archivieren
-        }
+        knopf={objekt.archiviert ? texte.stammdaten.aktivieren : texte.stammdaten.archivieren}
         knopfLaeuft={texte.stammdaten.speichernLaeuft}
       />
 

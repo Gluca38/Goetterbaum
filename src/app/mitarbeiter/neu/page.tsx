@@ -21,9 +21,7 @@ export default function NeuerMitarbeiter() {
                   knopfLaeuft={texte.mitarbeiter.anlegenLaeuft}
                 />
                 <p>
-                  <Link href="/mitarbeiter">
-                    {texte.mitarbeiter.zurUebersicht}
-                  </Link>
+                  <Link href="/mitarbeiter">{texte.mitarbeiter.zurUebersicht}</Link>
                 </p>
               </>
             )}
