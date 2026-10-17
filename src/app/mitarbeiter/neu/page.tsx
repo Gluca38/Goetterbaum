@@ -4,7 +4,7 @@ import { texte } from "@/texte";
 import styles from "../../page.module.css";
 import { anlegen } from "../actions";
 import { MitarbeiterFormular } from "../mitarbeiter-formular";
-import { NurFuerBuero } from "../nur-fuer-buero";
+import { NurFuerBuero } from "@/app/nur-fuer-buero";
 
 export default function NeuerMitarbeiter() {
   return (
@@ -12,7 +12,7 @@ export default function NeuerMitarbeiter() {
       <main className={styles.main}>
         <h1>{texte.mitarbeiter.neu}</h1>
         <Suspense fallback={<p>{texte.mitarbeiter.laedt}</p>}>
-          <NurFuerBuero>
+          <NurFuerBuero keineBerechtigung={texte.mitarbeiter.keineBerechtigung}>
             {() => (
               <>
                 <MitarbeiterFormular

@@ -2,32 +2,13 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { angemeldeterMitarbeiter } from "@/lib/angemeldeter-mitarbeiter";
+import { alsBuero } from "@/lib/als-buero";
 import { pruefeMitarbeiterEingabe } from "@/lib/mitarbeiter/eingabe";
 import { einladungsFehler, pruefeAenderung } from "@/lib/mitarbeiter/regeln";
 import { ladeMitarbeiter } from "@/lib/mitarbeiter/verwaltung";
+import { FEHLER, OK, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { createDienstClient } from "@/lib/supabase/dienst";
-import { createClient } from "@/lib/supabase/server";
 import { texte } from "@/texte";
-
-export type Rueckmeldung = { fehler: string | null; meldung: string | null };
-
-const OK = (meldung: string | null = null): Rueckmeldung => ({
-  fehler: null,
-  meldung,
-});
-const FEHLER = (fehler: string): Rueckmeldung => ({ fehler, meldung: null });
-
-// Jede Aktion ist auch ohne die Oberfläche per Direktaufruf erreichbar.
-// Deshalb prüft jede zuerst, dass ein aktiver Büro-Nutzer angemeldet ist.
-// Alle Änderungen an der Tabelle laufen danach im Namen dieses Nutzers,
-// sodass die Zugriffsregeln der Datenbank zusätzlich greifen.
-async function alsBuero() {
-  const supabase = await createClient();
-  const ich = await angemeldeterMitarbeiter(supabase);
-  if (!ich || ich.rolle !== "buero") redirect("/");
-  return { supabase, ich };
-}
 
 export async function anlegen(
   _vorher: Rueckmeldung,
