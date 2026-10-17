@@ -4,7 +4,8 @@ import type { KundenDaten } from "./eingabe";
 
 export type Kunde = KundenDaten & { id: string; archiviert: boolean };
 
-const SPALTEN = "id, name, strasse, adresszusatz, plz, ort, abrechnungszeitraum, archiviert";
+const SPALTEN =
+  "id, name, strasse, adresszusatz, plz, ort, abrechnungszeitraum, rundungsregel, archiviert";
 
 // Alle Kunden, die der angemeldete Nutzer sehen darf, auch archivierte.
 // Welche das sind, entscheiden die Zugriffsregeln der Datenbank (nur das
