@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { NurFuerBuero } from "@/app/nur-fuer-buero";
 import { createClient } from "@/lib/supabase/server";
-import { tagUndZeit, wasUndWo } from "@/lib/zeiterfassung/anzeige";
+import { istUnvollstaendig, tagUndZeit, wasUndWo } from "@/lib/zeiterfassung/anzeige";
 import { ladeZeiteintragMitProtokoll } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 import styles from "../../page.module.css";
@@ -37,12 +37,21 @@ async function Protokoll({ id: idVersprechen }: { id: Promise<string> }) {
     );
   }
 
-  const { eintrag, protokoll } = geladen;
+  const { eintrag, protokoll, jetzt } = geladen;
+  const unvollstaendig = istUnvollstaendig(eintrag, jetzt);
   return (
     <>
       <h2>
-        {eintrag.mitarbeiter_name} · {tagUndZeit(eintrag.beginn, eintrag.ende, t.laeuft)}
+        {eintrag.mitarbeiter_name} ·{" "}
+        {tagUndZeit(eintrag.beginn, eintrag.ende, unvollstaendig ? t.unvollstaendig : t.laeuft)}
       </h2>
+      {unvollstaendig && (
+        <p>
+          <Link href={`/nachtrag/${eintrag.id}?aus=pruefliste`}>
+            {texte.nachtrag.endeNachtragen}
+          </Link>
+        </p>
+      )}
       <p>
         {wasUndWo(eintrag)}
         {eintrag.nachtrag && ` · ${texte.nachtrag.markierung}`}

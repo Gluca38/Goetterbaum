@@ -90,6 +90,12 @@
   border-radius: 12px;
 }
 
+/* Läuft seit mehr als 12 Stunden: soll sofort auffallen. */
+.laufend.unvollstaendig {
+  border-color: #b3261e;
+  background: #fde7e5;
+}
+
 .seit {
   font-size: 1.5rem;
   font-weight: bold;

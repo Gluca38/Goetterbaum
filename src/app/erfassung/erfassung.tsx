@@ -1,21 +1,27 @@
 import Link from "next/link";
+import { EndeFormular } from "@/app/nachtrag/ende-formular";
+import { berlinerDatum } from "@/lib/berliner-zeit";
 import { createClient } from "@/lib/supabase/server";
 import {
   ANGEZEIGTE_TAGE,
   angelegtVon,
+  istUnvollstaendig,
   laeuftSeit,
   nachTagen,
+  UNVOLLSTAENDIG_NACH_STUNDEN,
   wasUndWo,
   type MeinZeiteintrag,
 } from "@/lib/zeiterfassung/anzeige";
 import { ladeAuswahl, ladeZeiteintraegeVon } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 import styles from "./erfassung.module.css";
+import { endeNachtragen } from "./actions";
 import { StartFormular } from "./start-formular";
 import { StoppKnopf } from "./stopp-knopf";
 
 // Die Live-Erfassung eines Mitarbeiters: entweder der laufende Zeiteintrag
-// mit Stopp oder das Start-Formular, darunter seine Einträge der letzten
+// mit Stopp (ist er unvollständig, stattdessen mit dem Formular für das
+// richtige Ende) oder das Start-Formular, darunter seine Einträge der letzten
 // Tage. eigene: der angemeldete Nutzer erfasst für sich selbst, sonst als
 // Vorarbeiter oder Büro für einen anderen.
 export async function Erfassung({
@@ -50,12 +56,31 @@ function Laufend({
   jetzt: number;
 }) {
   const anleger = angelegtVon(eintrag, mitarbeiterId);
+  // Ein Stopp würde hier "jetzt" als Ende speichern, also mehr als 12
+  // Stunden. Deshalb nur das Formular für das richtige Ende.
+  const unvollstaendig = istUnvollstaendig(eintrag, jetzt);
   return (
-    <div className={styles.laufend} role="status">
+    <div
+      className={`${styles.laufend} ${unvollstaendig ? styles.unvollstaendig : ""}`}
+      role="status"
+    >
+      {unvollstaendig && (
+        <>
+          <h2>{texte.erfassung.unvollstaendig}</h2>
+          <p>{texte.erfassung.unvollstaendigHinweis(UNVOLLSTAENDIG_NACH_STUNDEN)}</p>
+        </>
+      )}
       <p className={styles.seit}>{texte.erfassung.laeuftSeit(laeuftSeit(eintrag.beginn, jetzt))}</p>
       <p className={styles.beschreibung}>{wasUndWo(eintrag)}</p>
       {anleger && <p>{anleger}</p>}
-      <StoppKnopf fuer={mitarbeiterId} />
+      {unvollstaendig ? (
+        <EndeFormular
+          aktion={endeNachtragen.bind(null, eintrag.id)}
+          datum={berlinerDatum(Date.parse(eintrag.beginn))}
+        />
+      ) : (
+        <StoppKnopf fuer={mitarbeiterId} />
+      )}
     </div>
   );
 }

@@ -2,7 +2,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { NurFuerBuero } from "@/app/nur-fuer-buero";
 import { createClient } from "@/lib/supabase/server";
-import { ANGEZEIGTE_TAGE, tagUndZeit, wasUndWo } from "@/lib/zeiterfassung/anzeige";
+import {
+  ANGEZEIGTE_TAGE,
+  istUnvollstaendig,
+  tagUndZeit,
+  wasUndWo,
+} from "@/lib/zeiterfassung/anzeige";
 import { ladeZeiteintraegeDerFirma } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 import styles from "../page.module.css";
@@ -24,14 +29,18 @@ export default function ZeiteintraegeUebersicht() {
 
 // Alle Zeiteinträge der Firma, der neueste zuerst. Nachträge sind
 // markiert, und bei jedem steht, wer ihn angelegt hat. Jeder Eintrag führt
-// zu seinem Änderungsprotokoll, beendete auch zum Ändern.
+// zu seinem Änderungsprotokoll, beendete auch zum Ändern, unvollständige
+// zum Nachtragen des Endes.
 async function Liste() {
   const t = texte.zeiteintraege;
-  const eintraege = await ladeZeiteintraegeDerFirma(await createClient());
+  const { eintraege, jetzt } = await ladeZeiteintraegeDerFirma(await createClient());
 
   return (
     <>
       <p>{t.hinweis(ANGEZEIGTE_TAGE)}</p>
+      <p>
+        <Link href="/unvollstaendige-eintraege">{t.zurPruefliste}</Link>
+      </p>
       {eintraege.length === 0 ? (
         <p>{t.keine(ANGEZEIGTE_TAGE)}</p>
       ) : (
@@ -48,23 +57,31 @@ async function Liste() {
             </tr>
           </thead>
           <tbody>
-            {eintraege.map((e) => (
-              <tr key={e.id}>
-                <td>{e.mitarbeiter_name}</td>
-                <td>{tagUndZeit(e.beginn, e.ende, t.laeuft)}</td>
-                <td>{wasUndWo(e)}</td>
-                <td>{e.nachtrag ? texte.nachtrag.markierung : ""}</td>
-                <td>{e.angelegt_von_name ?? texte.protokoll.unbekannt}</td>
-                <td>
-                  <Link href={`/zeiteintraege/${e.id}`}>{t.protokollOeffnen}</Link>
-                </td>
-                <td>
-                  {e.ende !== null && (
-                    <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {eintraege.map((e) => {
+              const unvollstaendig = istUnvollstaendig(e, jetzt);
+              return (
+                <tr key={e.id}>
+                  <td>{e.mitarbeiter_name}</td>
+                  <td>
+                    {tagUndZeit(e.beginn, e.ende, unvollstaendig ? t.unvollstaendig : t.laeuft)}
+                  </td>
+                  <td>{wasUndWo(e)}</td>
+                  <td>{e.nachtrag ? texte.nachtrag.markierung : ""}</td>
+                  <td>{e.angelegt_von_name ?? texte.protokoll.unbekannt}</td>
+                  <td>
+                    <Link href={`/zeiteintraege/${e.id}`}>{t.protokollOeffnen}</Link>
+                  </td>
+                  <td>
+                    {e.ende !== null && (
+                      <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
+                    )}
+                    {unvollstaendig && (
+                      <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.endeNachtragen}</Link>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

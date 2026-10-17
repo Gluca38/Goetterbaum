@@ -29,6 +29,7 @@ export const texte = {
     objekteVerwalten: "Objekte verwalten",
     taetigkeitenVerwalten: "Tätigkeiten verwalten",
     zeiteintraegeAnsehen: "Zeiteinträge ansehen",
+    unvollstaendigePruefen: "Unvollständige Zeiteinträge prüfen",
     fuerAndereErfassen: "Für andere erfassen",
   },
   passwortVergessen: {
@@ -236,7 +237,8 @@ export const texte = {
     fehlerObjekt: "Bitte wähle ein Objekt.",
     fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",
     fehlerLaeuftSchon: "Es läuft schon ein Zeiteintrag. Stoppe ihn, bevor du einen neuen startest.",
-    fehlerLaeuftNichts: "Es läuft kein Zeiteintrag mehr.",
+    fehlerLaeuftNichtsOderUnvollstaendig:
+      "Es läuft kein Zeiteintrag mehr, oder er läuft schon so lange, dass du das richtige Ende nachtragen musst.",
     fehlerNichtZurAuswahl:
       "Dieses Objekt oder diese Tätigkeit steht nicht mehr zur Auswahl. Bitte lade die Seite neu.",
     fehlerAbgemeldet: "Du bist nicht mehr angemeldet. Bitte melde dich neu an.",
@@ -246,6 +248,9 @@ export const texte = {
       "Der Stopp wurde nicht gespeichert. Bitte versuche es noch einmal oder trage die Zeit später als Nachtrag ein.",
     ohneNetzStart:
       "Kein Internet: Der Start wurde nicht gespeichert. Bitte trage diese Zeit später als Nachtrag ein.",
+    unvollstaendig: "Unvollständig",
+    unvollstaendigHinweis: (stunden: number) =>
+      `Dieser Zeiteintrag läuft seit mehr als ${stunden} Stunden. Wurde der Stopp vergessen? Bitte trage das richtige Ende ein.`,
     ohneNetzStopp:
       "Kein Internet: Der Stopp wurde nicht gespeichert. Bitte trage das Ende später als Nachtrag ein.",
   },
@@ -277,6 +282,15 @@ export const texte = {
     fehlerEndeVorBeginn:
       "Das Ende muss nach dem Beginn liegen. Über Mitternacht trage bitte zwei Einträge ein.",
     fehlerZukunft: "Ein Nachtrag kann nicht in der Zukunft enden.",
+    endeNachtragen: "Ende nachtragen",
+    endeSpeichern: "Ende speichern",
+    schonBeendet: "Dieser Zeiteintrag ist schon beendet.",
+    mitJetztBeendet: (stunden: number) =>
+      `Der Zeiteintrag wurde mit der aktuellen Uhrzeit beendet, weil er noch keine ${stunden} Stunden lief. Bitte korrigiere das Ende über „Ändern“.`,
+    nichtUnvollstaendig: (stunden: number) =>
+      `Dieser Zeiteintrag läuft noch keine ${stunden} Stunden. Stoppe ihn, wenn die Arbeit zu Ende ist.`,
+    fehlerUhrzeitEnde: "Bitte gib das Ende als Uhrzeit ein, z. B. 16:30.",
+    fehlerEndeNachBeginn: "Das Ende muss nach dem Beginn liegen.",
   },
   fuerAndere: {
     titel: "Für andere erfassen",
@@ -304,6 +318,8 @@ export const texte = {
     spalteNachtrag: "Nachtrag",
     spalteAngelegtVon: "Angelegt von",
     laeuft: "läuft",
+    unvollstaendig: "unvollständig",
+    zurPruefliste: "Unvollständige Zeiteinträge prüfen",
     protokollOeffnen: "Protokoll",
     nichtGefunden: "Diesen Zeiteintrag gibt es nicht.",
     protokollTitel: "Änderungsprotokoll",
@@ -314,6 +330,16 @@ export const texte = {
     spalteAenderung: "Änderung",
     aenderung: (feld: string, vorher: string, nachher: string) => `${feld}: ${vorher} → ${nachher}`,
     zurUebersicht: "Zurück zu den Zeiteinträgen",
+  },
+  pruefliste: {
+    titel: "Unvollständige Zeiteinträge",
+    laedt: "Lädt …",
+    keineBerechtigung: "Die unvollständigen Zeiteinträge aller Mitarbeiter sieht nur das Büro.",
+    hinweis: (stunden: number) =>
+      `Zeiteinträge, die seit mehr als ${stunden} Stunden laufen. Bitte das richtige Ende nachtragen, wenn nötig nach Rücksprache mit dem Mitarbeiter. Beendet wird nichts von selbst.`,
+    keine: "Es gibt keine unvollständigen Zeiteinträge.",
+    spalteSeit: "Läuft seit",
+    zurueck: "Zurück zur Prüfliste",
   },
   protokoll: {
     art: "Art",

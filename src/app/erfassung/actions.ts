@@ -7,7 +7,8 @@ import { darfFuerAndereErfassen } from "@/lib/rollen";
 import { FEHLER, OK, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { createClient } from "@/lib/supabase/server";
 import { pruefeStartEingabe } from "@/lib/zeiterfassung/eingabe";
-import { pruefeNachtragEingabe } from "@/lib/zeiterfassung/nachtrag";
+import { UNVOLLSTAENDIG_NACH_STUNDEN } from "@/lib/zeiterfassung/anzeige";
+import { pruefeEndeEingabe, pruefeNachtragEingabe } from "@/lib/zeiterfassung/nachtrag";
 import { ladeZeiteintragZumAendern } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 
@@ -89,17 +90,23 @@ export async function fahrtStarten(fuer: string): Promise<Rueckmeldung> {
 
 // Stoppt den laufenden Zeiteintrag. Das Ende setzt die Datenbank mit ihrer
 // eigenen Uhr; der mitgeschickte Wert ist nur nötig, damit sich überhaupt
-// etwas ändert.
+// etwas ändert. Ein unvollständiger Eintrag wird nicht gestoppt: Bei ihm
+// übernähme die Datenbank den mitgeschickten Wert als nachgetragenes Ende,
+// also mehr als 12 Stunden. Das passiert, wenn die Seite vor Ablauf der 12
+// Stunden geladen und erst danach Stopp gedrückt wurde.
 export async function zeiteintragStoppen(fuer: string): Promise<Rueckmeldung> {
   const erfasser = await alsErfasser(fuer);
   if (erfasser.fehler) return erfasser.fehler;
   const { supabase } = erfasser;
 
+  const jetzt = Date.now();
+  const unvollstaendigVor = jetzt - UNVOLLSTAENDIG_NACH_STUNDEN * 60 * 60 * 1000;
   const { data, error } = await supabase
     .from("zeiteintrag")
-    .update({ ende: new Date().toISOString() })
+    .update({ ende: new Date(jetzt).toISOString() })
     .eq("mitarbeiter_id", fuer)
     .is("ende", null)
+    .gte("beginn", new Date(unvollstaendigVor).toISOString())
     .select("id");
   if (error) {
     console.error("Zeiteintrag stoppen fehlgeschlagen", error);
@@ -107,8 +114,9 @@ export async function zeiteintragStoppen(fuer: string): Promise<Rueckmeldung> {
   }
 
   refresh();
-  // Schon woanders gestoppt (z. B. auf einem zweiten Gerät).
-  if (data.length === 0) return FEHLER(texte.erfassung.fehlerLaeuftNichts);
+  // Schon woanders gestoppt (z. B. auf einem zweiten Gerät) oder
+  // inzwischen unvollständig; die neu geladene Seite zeigt, was gilt.
+  if (data.length === 0) return FEHLER(texte.erfassung.fehlerLaeuftNichtsOderUnvollstaendig);
   return OK();
 }
 
@@ -183,5 +191,52 @@ export async function zeiteintragAendern(
 
   refresh();
   if (data.length === 0) return FEHLER(texte.nachtrag.nichtGefunden);
+  return OK(texte.nachtrag.gespeichert);
+}
+
+// Trägt das Ende eines unvollständigen Zeiteintrags nach (läuft seit mehr
+// als 12 Stunden), für sich selbst oder als Vorarbeiter bzw. Büro für
+// einen anderen. Die Datenbank übernimmt das Ende nur bei einem
+// unvollständigen Eintrag und markiert ihn dann als Nachtrag; bei jedem
+// anderen laufenden setzt sie ihre eigene Uhr wie beim Stopp.
+export async function endeNachtragen(
+  id: string,
+  _vorher: Rueckmeldung,
+  formData: FormData,
+): Promise<Rueckmeldung> {
+  const supabase = await createClient();
+  const ich = await angemeldeterMitarbeiter(supabase);
+  if (!ich) return FEHLER(texte.erfassung.fehlerAbgemeldet);
+  const bisher = await ladeZeiteintragZumAendern(supabase, id);
+  if (!bisher) return FEHLER(texte.nachtrag.nichtGefunden);
+  if (bisher.mitarbeiter_id !== ich.id && !darfFuerAndereErfassen(ich.rolle)) {
+    return FEHLER(texte.nachtrag.nichtGefunden);
+  }
+  if (bisher.ende !== null) return FEHLER(texte.nachtrag.schonBeendet);
+  if (!bisher.unvollstaendig) {
+    return FEHLER(texte.nachtrag.nichtUnvollstaendig(UNVOLLSTAENDIG_NACH_STUNDEN));
+  }
+
+  const eingabe = pruefeEndeEingabe(formData, Date.now(), bisher.beginn);
+  if (!eingabe.ok) return FEHLER(eingabe.fehler);
+
+  const { data, error } = await supabase
+    .from("zeiteintrag")
+    .update({ ende: eingabe.ende })
+    .eq("id", id)
+    .is("ende", null)
+    .select("nachtrag");
+  if (error) {
+    console.error("Ende nachtragen fehlgeschlagen", error);
+    return FEHLER(texte.nachtrag.fehlerNichtGespeichert);
+  }
+
+  refresh();
+  // Inzwischen woanders beendet.
+  if (data.length === 0) return FEHLER(texte.nachtrag.schonBeendet);
+  // Nach der Uhr der Datenbank lief er noch keine 12 Stunden (die Uhren
+  // weichen knapp an der Grenze ab): Sie hat ihn wie bei einem Stopp mit
+  // ihrer eigenen Uhr beendet.
+  if (!data[0].nachtrag) return FEHLER(texte.nachtrag.mitJetztBeendet(UNVOLLSTAENDIG_NACH_STUNDEN));
   return OK(texte.nachtrag.gespeichert);
 }
