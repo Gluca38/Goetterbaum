@@ -12,11 +12,34 @@ env:
   NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
-  staging-migrationen:
-    name: Migrationen auf Staging
+  # Probelauf auf einer Wegwerf-Datenbank im GitHub-Runner (ADR-0003).
+  # Scheitert er, wird Staging nicht angefasst.
+  migrationen-probelauf:
+    name: Migrationen-Probelauf
     if: >-
       github.event.deployment_status.state == 'success' &&
       startsWith(github.event.deployment.environment, 'Preview')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.deployment.sha }}
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Neue Migrationen stehen in begin; … commit;
+        run: bash scripts/pruefe-migrationen.sh
+      # Startet eine frische Supabase-Datenbank (Docker) und spielt dort
+      # alle Migrationen ein (db start macht beides), auf demselben Weg wie
+      # danach auf Staging
+      - name: Alle Migrationen auf einer Wegwerf-Datenbank einspielen
+        run: npx supabase db start
+
+  staging-migrationen:
+    name: Migrationen auf Staging
+    needs: migrationen-probelauf
     runs-on: ubuntu-latest
     # Nie zwei Läufe gleichzeitig an der Staging-Datenbank bauen lassen
     concurrency:
@@ -40,11 +63,23 @@ jobs:
     # Name muss "E2E-Tests" bleiben: Pflicht-Prüfung in den Regeln für main
     name: E2E-Tests
     needs: staging-migrationen
+    # Läuft auch, wenn Probelauf oder Staging-Migrationen gescheitert sind.
+    # Sonst wäre diese Pflicht-Prüfung nur "übersprungen", und das zählt bei
+    # GitHub als bestanden.
+    if: >-
+      !cancelled() &&
+      github.event.deployment_status.state == 'success' &&
+      startsWith(github.event.deployment.environment, 'Preview')
     runs-on: ubuntu-latest
     concurrency:
       group: e2e-${{ github.event.deployment.sha }}
       cancel-in-progress: true
     steps:
+      - name: Datenbank-Migrationen müssen geklappt haben
+        if: needs.staging-migrationen.result != 'success'
+        run: |
+          echo "::error::Der Migrationen-Probelauf oder die Migrationen auf Staging sind gescheitert. Details stehen in diesen Jobs."
+          exit 1
       - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.deployment.sha }}
