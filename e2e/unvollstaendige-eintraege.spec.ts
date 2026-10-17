@@ -74,7 +74,7 @@ test.describe("am Handy", () => {
     await feld(page, "Datum").fill(berlinerDatum(Date.now() + 2 * STUNDE));
     await feld(page, "Bis").fill(berlinerUhrzeit(Date.now() + 2 * STUNDE));
     await page.getByRole("button", { name: "Ende speichern" }).click();
-    await expect(page.getByRole("alert")).toHaveText(
+    await expect(page.getByRole("alert").filter({ hasText: "Zukunft" })).toHaveText(
       "Ein Nachtrag kann nicht in der Zukunft enden.",
     );
     expect((await gespeicherterEintrag(id)).ende).toBeNull();
