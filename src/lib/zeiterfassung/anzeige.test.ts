@@ -12,6 +12,7 @@ function eintrag(
     art: "taetigkeit",
     beginn,
     ende,
+    nachtrag: false,
     objekt_bezeichnung: "Haus A",
     taetigkeit_name: "Unterhaltsreinigung",
     ...ort,

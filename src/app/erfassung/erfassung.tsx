@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   ANGEZEIGTE_TAGE,
@@ -50,6 +51,9 @@ function MeineEintraege({ eintraege }: { eintraege: MeinZeiteintrag[] }) {
   return (
     <div className={styles.liste}>
       <h2>{texte.erfassung.meineEintraege}</h2>
+      <p>
+        <Link href="/nachtrag">{texte.nachtrag.nachtragen}</Link>
+      </p>
       {tage.length === 0 && <p>{texte.erfassung.keineEintraege(ANGEZEIGTE_TAGE)}</p>}
       {tage.map((tag) => (
         <section key={tag.datum} aria-label={tag.titel}>
@@ -60,8 +64,13 @@ function MeineEintraege({ eintraege }: { eintraege: MeinZeiteintrag[] }) {
                 <span>
                   {texte.erfassung.vonBis(e.von, e.bis)} · {e.dauer}
                 </span>
+                {e.nachtrag && (
+                  <span className={styles.markierung}>{texte.nachtrag.markierung}</span>
+                )}
                 <br />
                 {wasUndWo(e)}
+                <br />
+                <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
               </li>
             ))}
           </ul>

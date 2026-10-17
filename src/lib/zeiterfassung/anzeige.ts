@@ -10,6 +10,8 @@ export type MeinZeiteintrag = {
   // Zeitpunkte als ISO-Text mit Zeitzone; ende ist leer, solange er läuft.
   beginn: string;
   ende: string | null;
+  // Nachträglich eingetragen oder geändert (setzt die Datenbank).
+  nachtrag: boolean;
   objekt_bezeichnung: string | null;
   taetigkeit_name: string | null;
 };
@@ -85,4 +87,12 @@ export function angezeigtAb(jetzt: number): string {
   const [jahr, monat, tag] = berlinerDatum(jetzt).split("-").map(Number);
   const ersterTag = new Date(Date.UTC(jahr, monat - 1, tag - (ANGEZEIGTE_TAGE - 1)));
   return new Date(berlinerMitternacht(ersterTag.toISOString().slice(0, 10))).toISOString();
+}
+
+// Tag und von–bis eines Eintrags in einer Zeile, z. B. für die Übersicht
+// im Büro. Ein laufender Eintrag hat statt des Endes laeuft.
+export function tagUndZeit(beginn: string, ende: string | null, laeuft: string): string {
+  const von = Date.parse(beginn);
+  const bis = ende === null ? laeuft : uhrzeit.format(Date.parse(ende));
+  return `${tagesTitel.format(von)}, ${uhrzeit.format(von)}–${bis}`;
 }

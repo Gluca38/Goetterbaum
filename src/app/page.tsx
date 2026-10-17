@@ -47,6 +47,9 @@ async function Begruessung() {
           <p>
             <Link href="/taetigkeiten">{texte.start.taetigkeitenVerwalten}</Link>
           </p>
+          <p>
+            <Link href="/zeiteintraege">{texte.start.zeiteintraegeAnsehen}</Link>
+          </p>
         </>
       )}
       <form action={abmelden}>

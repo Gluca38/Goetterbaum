@@ -3,9 +3,11 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { refresh } from "next/cache";
 import { angemeldeterMitarbeiter } from "@/lib/angemeldeter-mitarbeiter";
+import { istId } from "@/lib/id";
 import { FEHLER, OK, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { createClient } from "@/lib/supabase/server";
 import { pruefeStartEingabe } from "@/lib/zeiterfassung/eingabe";
+import { pruefeNachtragEingabe } from "@/lib/zeiterfassung/nachtrag";
 import { texte } from "@/texte";
 
 // Fehlercodes der Datenbank (siehe Migration zum Zeiteintrag): Es läuft
@@ -14,6 +16,9 @@ import { texte } from "@/texte";
 const LAEUFT_SCHON = "23505";
 const PRUEFREGEL_VERLETZT = "23514";
 const FREMDSCHLUESSEL_VERLETZT = "23503";
+// Der Eintrag überschneidet sich mit einem anderen desselben Mitarbeiters
+// (Ausschlussregel, siehe Migration zu Nachträgen).
+const UEBERSCHNEIDUNG = "23P01";
 
 // Jede Aktion ist auch ohne die Oberfläche per Direktaufruf erreichbar.
 // Deshalb prüft sie zuerst, wer angemeldet ist. Gespeichert wird im Namen
@@ -27,7 +32,11 @@ async function alsErfasser() {
 }
 
 function fehlerBeimStart(error: PostgrestError): Rueckmeldung {
-  if (error.code === LAEUFT_SCHON) return FEHLER(texte.erfassung.fehlerLaeuftSchon);
+  // Ein Start überschneidet sich nur mit einem laufenden Eintrag, denn
+  // Nachträge enden nie in der Zukunft.
+  if (error.code === LAEUFT_SCHON || error.code === UEBERSCHNEIDUNG) {
+    return FEHLER(texte.erfassung.fehlerLaeuftSchon);
+  }
   if (error.code === PRUEFREGEL_VERLETZT || error.code === FREMDSCHLUESSEL_VERLETZT) {
     return FEHLER(texte.erfassung.fehlerNichtZurAuswahl);
   }
@@ -89,4 +98,62 @@ export async function zeiteintragStoppen(): Promise<Rueckmeldung> {
   // Schon woanders gestoppt (z. B. auf einem zweiten Gerät).
   if (data.length === 0) return FEHLER(texte.erfassung.fehlerLaeuftNichts);
   return OK();
+}
+
+function fehlerBeimNachtrag(error: PostgrestError): Rueckmeldung {
+  if (error.code === UEBERSCHNEIDUNG) return FEHLER(texte.nachtrag.fehlerUeberschneidung);
+  if (error.code === PRUEFREGEL_VERLETZT || error.code === FREMDSCHLUESSEL_VERLETZT) {
+    return FEHLER(texte.erfassung.fehlerNichtZurAuswahl);
+  }
+  console.error("Nachtrag speichern fehlgeschlagen", error);
+  return FEHLER(texte.nachtrag.fehlerNichtGespeichert);
+}
+
+// Trägt einen beendeten Zeiteintrag nachträglich ein. Als Nachtrag
+// markiert ihn die Datenbank.
+export async function zeiteintragNachtragen(
+  _vorher: Rueckmeldung,
+  formData: FormData,
+): Promise<Rueckmeldung> {
+  const { supabase, ich } = await alsErfasser();
+  if (!ich) return FEHLER(texte.erfassung.fehlerAbgemeldet);
+
+  const eingabe = pruefeNachtragEingabe(formData, Date.now());
+  if (!eingabe.ok) return FEHLER(eingabe.fehler);
+
+  const { error } = await supabase
+    .from("zeiteintrag")
+    .insert({ firma_id: ich.firma_id, mitarbeiter_id: ich.id, ...eingabe.daten });
+  if (error) return fehlerBeimNachtrag(error);
+
+  refresh();
+  return OK(texte.nachtrag.gespeichert);
+}
+
+// Ändert einen eigenen, beendeten Zeiteintrag. Ändern sich Beginn oder
+// Ende, wird er in der Datenbank zum Nachtrag.
+export async function zeiteintragAendern(
+  id: string,
+  _vorher: Rueckmeldung,
+  formData: FormData,
+): Promise<Rueckmeldung> {
+  const { supabase, ich } = await alsErfasser();
+  if (!ich) return FEHLER(texte.erfassung.fehlerAbgemeldet);
+  if (!istId(id)) return FEHLER(texte.nachtrag.nichtGefunden);
+
+  const eingabe = pruefeNachtragEingabe(formData, Date.now());
+  if (!eingabe.ok) return FEHLER(eingabe.fehler);
+
+  const { data, error } = await supabase
+    .from("zeiteintrag")
+    .update(eingabe.daten)
+    .eq("id", id)
+    .eq("mitarbeiter_id", ich.id)
+    .not("ende", "is", null)
+    .select("id");
+  if (error) return fehlerBeimNachtrag(error);
+
+  refresh();
+  if (data.length === 0) return FEHLER(texte.nachtrag.nichtGefunden);
+  return OK(texte.nachtrag.gespeichert);
 }

@@ -32,9 +32,9 @@ async function archiviere(tabelle: "objekt" | "taetigkeit", id: string) {
 async function gespeicherterEintrag(id: string) {
   const { data } = await dienstZugang()!
     .from("zeiteintrag")
-    .select("beginn, ende, angelegt_von")
+    .select("beginn, ende, angelegt_von, nachtrag")
     .eq("id", id)
-    .single<{ beginn: string; ende: string | null; angelegt_von: string }>();
+    .single<{ beginn: string; ende: string | null; angelegt_von: string; nachtrag: boolean }>();
   return data!;
 }
 
@@ -51,15 +51,15 @@ test("Ein Mitarbeiter startet und stoppt nur eigene Zeiteinträge, und die Daten
   const supabase = await schnittstelleAls(ich);
   const start = { firma_id: firmaA.id, art: "taetigkeit", objekt_id: objektId, taetigkeit_id: taetigkeitId };
 
-  // Beginn und angelegt_von lassen sich nicht selbst setzen.
-  const mitBeginn = await supabase
-    .from("zeiteintrag")
-    .insert({ ...start, mitarbeiter_id: ich.id, beginn: "2020-01-01T08:00:00Z" });
-  expect(mitBeginn.error?.code).toBe("42501");
+  // angelegt_von und die Nachtrag-Markierung lassen sich nicht selbst setzen.
   const mitAnleger = await supabase
     .from("zeiteintrag")
     .insert({ ...start, mitarbeiter_id: ich.id, angelegt_von: kollege.id });
   expect(mitAnleger.error?.code).toBe("42501");
+  const mitMarkierung = await supabase
+    .from("zeiteintrag")
+    .insert({ ...start, mitarbeiter_id: ich.id, nachtrag: false });
+  expect(mitMarkierung.error?.code).toBe("42501");
 
   // Nicht für jemand anderen.
   const fuerKollegen = await supabase
@@ -67,9 +67,11 @@ test("Ein Mitarbeiter startet und stoppt nur eigene Zeiteinträge, und die Daten
     .insert({ ...start, mitarbeiter_id: kollege.id });
   expect(fuerKollegen.error?.code).toBe("42501");
 
+  // Ein Start ohne Ende: Wer einen anderen Beginn schickt, bekommt
+  // trotzdem die Uhr der Datenbank.
   const { data, error } = await supabase
     .from("zeiteintrag")
-    .insert({ ...start, mitarbeiter_id: ich.id })
+    .insert({ ...start, mitarbeiter_id: ich.id, beginn: "2020-01-01T08:00:00Z" })
     .select("id")
     .single<{ id: string }>();
   expect(error).toBeNull();
@@ -77,6 +79,7 @@ test("Ein Mitarbeiter startet und stoppt nur eigene Zeiteinträge, und die Daten
   erwarteJetzt(gestartet.beginn);
   expect(gestartet.ende).toBeNull();
   expect(gestartet.angelegt_von).toBe(ich.id);
+  expect(gestartet.nachtrag).toBe(false);
 
   // Ein zweiter Start, auch als Fahrt, ist nicht möglich.
   const zweiter = await supabase
@@ -91,22 +94,32 @@ test("Ein Mitarbeiter startet und stoppt nur eigene Zeiteinträge, und die Daten
     .eq("id", data!.id)
     .select("id");
   expect(stopp.data).toHaveLength(1);
-  erwarteJetzt((await gespeicherterEintrag(data!.id)).ende);
+  const gestoppt = await gespeicherterEintrag(data!.id);
+  erwarteJetzt(gestoppt.ende);
+  // Der Stopp ist kein Nachtrag.
+  expect(gestoppt.nachtrag).toBe(false);
 
-  // Ein beendeter Eintrag lässt sich so nicht mehr ändern.
-  const nochmal = await supabase
-    .from("zeiteintrag")
-    .update({ ende: "2099-01-01T00:00:00Z" })
-    .eq("id", data!.id)
-    .select("id");
-  expect(nochmal.data).toEqual([]);
+  // Ein beendeter Eintrag endet nie in der Zukunft und läuft nie wieder.
+  for (const ende of ["2099-01-01T00:00:00Z", null]) {
+    const nochmal = await supabase.from("zeiteintrag").update({ ende }).eq("id", data!.id);
+    expect(nochmal.error?.code, String(ende)).toBe("23514");
+  }
+  expect(await gespeicherterEintrag(data!.id)).toEqual(gestoppt);
 
-  // Nur das Ende ist änderbar, löschen darf niemand.
-  const anderesObjekt = await supabase
-    .from("zeiteintrag")
-    .update({ objekt_id: null })
-    .eq("id", data!.id);
-  expect(anderesObjekt.error?.code).toBe("42501");
+  // Mitarbeiter, Firma und Anleger sind nicht änderbar, löschen darf
+  // niemand.
+  for (const aenderung of [
+    { mitarbeiter_id: kollege.id },
+    { firma_id: firmaA.id },
+    { angelegt_von: kollege.id },
+    { nachtrag: true },
+  ]) {
+    const { error: fehler } = await supabase
+      .from("zeiteintrag")
+      .update(aenderung)
+      .eq("id", data!.id);
+    expect(fehler?.code, Object.keys(aenderung)[0]).toBe("42501");
+  }
   const loeschen = await supabase.from("zeiteintrag").delete().eq("id", data!.id);
   expect(loeschen.error?.code).toBe("42501");
   expect(await gespeicherterEintrag(data!.id)).not.toBeNull();
@@ -147,11 +160,20 @@ test("Jeder sieht und stoppt nur seine eigenen Zeiteinträge, auch über die Fir
   expect(fremdStoppen.data).toEqual([]);
   expect((await gespeicherterEintrag(fremder)).ende).toBeNull();
 
-  // Auch Vorarbeiter und Büro sehen vorerst nur eigene Einträge.
-  for (const zugang of [firmaA.vorarbeiter, firmaA.buero, firmaB.buero]) {
+  // Vorarbeiter sehen vorerst nur eigene Einträge, das Büro alle der
+  // eigenen Firma, das Büro einer anderen Firma keine.
+  for (const [zugang, sichtbar] of [
+    [firmaA.vorarbeiter, []],
+    [firmaA.buero, [meiner, fremder].sort()],
+    [firmaB.buero, []],
+  ] as const) {
     const andere = await schnittstelleAls(zugang);
-    const { data } = await andere.from("zeiteintrag").select("id").in("id", [meiner, fremder]);
-    expect(data, zugang.name).toEqual([]);
+    const { data } = await andere
+      .from("zeiteintrag")
+      .select("id")
+      .in("id", [meiner, fremder])
+      .order("id");
+    expect(data?.map((e) => e.id), zugang.name).toEqual(sichtbar);
   }
 });
 
