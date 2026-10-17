@@ -40,8 +40,8 @@ function berlinerVersatz(zeitpunkt: number): number {
 }
 
 // Der Zeitpunkt zur Uhrzeit "HH:MM" am Tag "JJJJ-MM-TT" in Berlin. Eine
-// Uhrzeit, die es wegen der Zeitumstellung zweimal gibt, gilt beim ersten
-// Mal.
+// Uhrzeit, die es wegen der Zeitumstellung zweimal gibt, gilt beim zweiten
+// Mal (Winterzeit).
 export function berlinerZeitpunkt(datum: string, uhrzeit: string): number {
   const alsUtc = Date.parse(`${datum}T${uhrzeit}:00Z`);
   return alsUtc - berlinerVersatz(alsUtc - berlinerVersatz(alsUtc));
