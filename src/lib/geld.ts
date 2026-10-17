@@ -14,6 +14,10 @@ export function euroInCent(eingabe: string): number | null {
   return euro * 100 + cent;
 }
 
+// Größter Betrag, den eine Cent-Spalte der Datenbank (integer) aufnehmen
+// kann: 21.474.836,47 €.
+export const HOECHSTER_BETRAG_CENT = 2_147_483_647;
+
 const EURO = new Intl.NumberFormat("de-DE", {
   style: "currency",
   currency: "EUR",

@@ -10,6 +10,7 @@ import { texte } from "@/texte";
 import styles from "../../page.module.css";
 import { kundeArchivieren, kundeSpeichern } from "../actions";
 import { KundenFormular } from "../kunden-formular";
+import { Stundensaetze } from "../stundensaetze";
 
 export default function KundeBearbeiten({ params }: PageProps<"/kunden/[id]">) {
   return (
@@ -77,6 +78,8 @@ async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
       ) : (
         <ObjektTabelle objekte={objekte} mitKunde={false} />
       )}
+
+      <Stundensaetze supabase={supabase} kundeId={kunde.id} />
 
       <ZurUebersicht />
     </>

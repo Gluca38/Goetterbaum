@@ -153,3 +153,23 @@ export async function legeKundeMitObjektAn(supabase: SupabaseClient, firmaId: st
 
   return { kundeId: kunde.id, objektId: objekt.id };
 }
+
+// Legt eine Tätigkeit an, ohne über die App zu gehen.
+export async function legeTaetigkeitAn(
+  supabase: SupabaseClient,
+  firmaId: string,
+  { standardStundensatzCent = 3000 }: { standardStundensatzCent?: number } = {},
+) {
+  const { data, error } = await supabase
+    .from("taetigkeit")
+    .insert({
+      firma_id: firmaId,
+      name: `Tätigkeit ${randomUUID().slice(0, 8)}`,
+      sparte: "reinigung",
+      standard_stundensatz_cent: standardStundensatzCent,
+    })
+    .select("id, name")
+    .single<{ id: string; name: string }>();
+  if (error) throw error;
+  return { taetigkeitId: data.id, name: data.name };
+}
