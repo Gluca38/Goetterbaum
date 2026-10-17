@@ -147,11 +147,11 @@ export async function legeKundeMitObjektAn(supabase: SupabaseClient, firmaId: st
       abrechnungsart: "pauschale",
       pauschale_cent: 50000,
     })
-    .select("id")
-    .single<{ id: string }>();
+    .select("id, bezeichnung")
+    .single<{ id: string; bezeichnung: string }>();
   if (fehler) throw fehler;
 
-  return { kundeId: kunde.id, objektId: objekt.id };
+  return { kundeId: kunde.id, objektId: objekt.id, bezeichnung: objekt.bezeichnung };
 }
 
 // Legt eine Tätigkeit an, ohne über die App zu gehen.
@@ -172,4 +172,46 @@ export async function legeTaetigkeitAn(
     .single<{ id: string; name: string }>();
   if (error) throw error;
   return { taetigkeitId: data.id, name: data.name };
+}
+
+// Ein frischer Zugang nur für einen Test. Zeiterfassungs-Tests brauchen
+// ihn, weil je Mitarbeiter nur ein Zeiteintrag laufen kann und die Tests
+// parallel laufen. Er verschwindet mit der Firma beim Aufräumen.
+export async function legeEigenenZugangAn(firmaId: string, rolle: Rolle = "mitarbeiter") {
+  return legeZugangAn(dienstZugang()!, firmaId, {
+    name: `Erfasser ${randomUUID().slice(0, 8)}`,
+    rolle,
+  });
+}
+
+// Legt einen Zeiteintrag mit beliebigen Zeiten an, ohne über die App zu
+// gehen (z. B. für Einträge an früheren Tagen).
+export async function legeZeiteintragAn(
+  supabase: SupabaseClient,
+  eintrag: {
+    firmaId: string;
+    mitarbeiterId: string;
+    objektId?: string;
+    taetigkeitId?: string;
+    beginn: string;
+    ende: string | null;
+  },
+) {
+  const fahrt = !eintrag.objektId;
+  const { data, error } = await supabase
+    .from("zeiteintrag")
+    .insert({
+      firma_id: eintrag.firmaId,
+      mitarbeiter_id: eintrag.mitarbeiterId,
+      angelegt_von: eintrag.mitarbeiterId,
+      art: fahrt ? "fahrt" : "taetigkeit",
+      objekt_id: eintrag.objektId ?? null,
+      taetigkeit_id: eintrag.taetigkeitId ?? null,
+      beginn: eintrag.beginn,
+      ende: eintrag.ende,
+    })
+    .select("id")
+    .single<{ id: string }>();
+  if (error) throw error;
+  return data.id;
 }

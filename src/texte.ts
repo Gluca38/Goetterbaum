@@ -220,6 +220,42 @@ export const texte = {
       "Diese Tätigkeit ist archiviert. Aktiviere sie zuerst wieder.",
     fehlerStundensatz: "Der Stundensatz ist kein gültiger Betrag. Beispiel: 32,50",
   },
+  erfassung: {
+    laedt: "Lädt …",
+    laeuftSeit: (seit: string) => `Läuft seit ${seit}`,
+    fahrt: "Fahrt",
+    stopp: "Stopp",
+    stoppLaeuft: "Wird gestoppt …",
+    start: "Start",
+    startLaeuft: "Wird gestartet …",
+    fahrtStarten: "Fahrt starten",
+    objektSuchen: "Objekt suchen",
+    keineTreffer: "Kein Objekt gefunden.",
+    weitereTreffer: "Weitere Objekte: bitte genauer suchen.",
+    keineObjekte: "Es gibt noch keine Objekte. Bitte wende dich an das Büro.",
+    taetigkeit: "Tätigkeit",
+    taetigkeitWaehlen: "Bitte wählen …",
+    keineTaetigkeiten: "Es gibt noch keine Tätigkeiten. Bitte wende dich an das Büro.",
+    meineEintraege: "Meine Zeiteinträge",
+    keineEintraege: "In den letzten 7 Tagen gibt es noch keine Zeiteinträge.",
+    vonBis: (von: string, bis: string) => `${von}–${bis}`,
+    fehlerObjekt: "Bitte wähle ein Objekt.",
+    fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",
+    fehlerLaeuftSchon:
+      "Es läuft schon ein Zeiteintrag. Stoppe ihn, bevor du einen neuen startest.",
+    fehlerLaeuftNichts: "Es läuft kein Zeiteintrag mehr.",
+    fehlerNichtZurAuswahl:
+      "Dieses Objekt oder diese Tätigkeit steht nicht mehr zur Auswahl. Bitte lade die Seite neu.",
+    fehlerAbgemeldet: "Du bist nicht mehr angemeldet. Bitte melde dich neu an.",
+    fehlerStart:
+      "Der Start wurde nicht gespeichert. Bitte versuche es noch einmal oder trage die Zeit später als Nachtrag ein.",
+    fehlerStopp:
+      "Der Stopp wurde nicht gespeichert. Bitte versuche es noch einmal oder trage die Zeit später als Nachtrag ein.",
+    ohneNetzStart:
+      "Kein Internet: Der Start wurde nicht gespeichert. Bitte trage diese Zeit später als Nachtrag ein.",
+    ohneNetzStopp:
+      "Kein Internet: Der Stopp wurde nicht gespeichert. Bitte trage das Ende später als Nachtrag ein.",
+  },
   stammdaten: {
     keineBerechtigung: "Kunden und Objekte verwalten darf nur das Büro.",
     archivieren: "Archivieren",

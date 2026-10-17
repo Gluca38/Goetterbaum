@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { angemeldeterMitarbeiter } from "@/lib/angemeldeter-mitarbeiter";
 import { texte } from "@/texte";
 import { abmelden } from "./actions";
+import { Erfassung } from "./erfassung/erfassung";
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -31,6 +32,7 @@ async function Begruessung() {
       <p>
         {texte.start.rolle}: <strong>{texte.rollen[mitarbeiter.rolle]}</strong>
       </p>
+      <Erfassung />
       {mitarbeiter.rolle === "buero" && (
         <>
           <p>
