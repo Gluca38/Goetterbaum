@@ -133,9 +133,15 @@ test("Das Büro gibt Einträge einzeln und gesammelt frei, der Mitarbeiter sieht
   await expect(zeile(unvollstaendig.bezeichnung)).toHaveCount(0);
   await expect(zeile(erster.bezeichnung)).toContainText(`von ${buero.name}`);
   await zeile(erster.bezeichnung).getByRole("link", { name: "Protokoll" }).click();
-  await expect(page.getByText(`von ${buero.name}`).filter({ visible: true })).toContainText(
-    "Freigegeben am",
-  );
+  // Erst wenn das Protokoll da ist: Die Liste zeigt denselben Text.
+  await expect(page).toHaveURL(new RegExp(`/zeiteintraege/${erster.id}$`));
+  await expect(page.getByRole("heading", { name: "Änderungsprotokoll" })).toBeVisible();
+  await expect(
+    page
+      .getByRole("paragraph")
+      .filter({ hasText: `von ${buero.name}` })
+      .filter({ visible: true }),
+  ).toContainText("Freigegeben am");
   await page.getByRole("button", { name: "Freigabe zurücknehmen" }).click();
   await expect(page.getByRole("button", { name: "Freigabe zurücknehmen" })).toHaveCount(0);
   await expect(
