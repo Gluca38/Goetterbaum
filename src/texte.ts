@@ -2,6 +2,7 @@
 // Sprachen ohne Umbau nachgerüstet werden können.
 import type { Abrechnungsart, Abrechnungszeitraum } from "@/lib/abrechnung";
 import type { Rolle } from "@/lib/rollen";
+import type { Sparte } from "@/lib/sparte";
 
 export const texte = {
   appName: "Götterbaum",
@@ -28,6 +29,7 @@ export const texte = {
     mitarbeiterVerwalten: "Mitarbeiter verwalten",
     kundenVerwalten: "Kunden verwalten",
     objekteVerwalten: "Objekte verwalten",
+    taetigkeitenVerwalten: "Tätigkeiten verwalten",
   },
   passwortVergessen: {
     titel: "Passwort vergessen",
@@ -170,6 +172,53 @@ export const texte = {
     fehlerKundeArchiviert:
       "Der Kunde dieses Objekts ist archiviert. Aktiviere zuerst den Kunden.",
   },
+  taetigkeiten: {
+    titel: "Tätigkeiten",
+    laedt: "Lädt …",
+    keineBerechtigung: "Tätigkeiten und Stundensätze verwalten darf nur das Büro.",
+    neu: "Neue Tätigkeit",
+    zurUebersicht: "Zurück zu den Tätigkeiten",
+    nichtGefunden: "Diese Tätigkeit gibt es nicht.",
+    keine: "Noch keine Tätigkeiten angelegt.",
+    archivierteTitel: "Archivierte Tätigkeiten",
+    spalteName: "Name",
+    spalteSparte: "Sparte",
+    spalteStundensatz: "Standard-Stundensatz",
+    name: "Name",
+    sparte: "Sparte",
+    standardStundensatz: "Standard-Stundensatz pro Stunde in Euro",
+    proStunde: (betrag: string) => `${betrag} pro Stunde`,
+    archiviertHinweis:
+      "Diese Tätigkeit ist archiviert. Sie erscheint in keiner Auswahlliste mehr; ihre Daten bleiben erhalten.",
+    archivierenHinweis:
+      "Archivierte Tätigkeiten erscheinen in keiner Auswahlliste mehr. Gelöscht wird nichts.",
+    fehlerName: "Bitte gib einen Namen ein.",
+    fehlerNameVergeben: "Eine Tätigkeit mit diesem Namen gibt es schon.",
+    fehlerSparte: "Bitte wähle eine Sparte.",
+    fehlerStundensatz: "Der Stundensatz ist kein gültiger Betrag. Beispiel: 32,50",
+  },
+  stundensaetze: {
+    titel: "Stundensätze",
+    hinweis:
+      "Ohne Absprache gilt der Standard-Stundensatz der Tätigkeit. Ein abweichender Stundensatz hat Vorrang.",
+    keineTaetigkeiten: "Es gibt noch keine Tätigkeiten.",
+    spalteTaetigkeit: "Tätigkeit",
+    spalteStandard: "Standard",
+    spalteAbweichend: "Abweichend",
+    spalteGilt: "Gilt",
+    gilt: (betrag: string, abweichend: boolean) =>
+      `${betrag} (${abweichend ? "abweichend" : "Standard"})`,
+    festlegenTitel: "Abweichenden Stundensatz festlegen",
+    taetigkeit: "Tätigkeit",
+    taetigkeitWaehlen: "Bitte wählen …",
+    stundensatz: "Abweichender Stundensatz pro Stunde in Euro",
+    festlegen: "Festlegen",
+    festlegenLaeuft: "Wird festgelegt …",
+    festgelegt: "Stundensatz festgelegt.",
+    entfernen: "Entfernen",
+    entfernenLaeuft: "Wird entfernt …",
+    fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",
+  },
   stammdaten: {
     keineBerechtigung: "Kunden und Objekte verwalten darf nur das Büro.",
     archivieren: "Archivieren",
@@ -188,6 +237,10 @@ export const texte = {
     monatlich: "Monatlich",
     quartalsweise: "Quartalsweise",
   } satisfies Record<Abrechnungszeitraum, string>,
+  sparten: {
+    reinigung: "Reinigung",
+    garten: "Garten",
+  } satisfies Record<Sparte, string>,
   abrechnungsarten: {
     pauschale: "Pauschale",
     stunden: "Stundenabrechnung",
