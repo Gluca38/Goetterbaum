@@ -1,11 +1,18 @@
-import { istAbrechnungszeitraum, type Abrechnungszeitraum } from "@/lib/abrechnung";
+import {
+  istAbrechnungszeitraum,
+  istRundungsregel,
+  type Abrechnungszeitraum,
+  type Rundungsregel,
+} from "@/lib/abrechnung";
 import { pruefeAdresse, type Adresse } from "@/lib/adresse";
 import { texte } from "@/texte";
 
-// Name, Rechnungsadresse und Abrechnungszeitraum eines Kunden.
+// Name, Rechnungsadresse, Abrechnungszeitraum und Rundungsregel eines
+// Kunden. Ohne eigene Rundungsregel (null) gilt der Standard der Firma.
 export type KundenDaten = Adresse & {
   name: string;
   abrechnungszeitraum: Abrechnungszeitraum;
+  rundungsregel: Rundungsregel | null;
 };
 
 export type EingabeErgebnis = { ok: true; daten: KundenDaten } | { ok: false; fehler: string };
@@ -15,6 +22,7 @@ export type EingabeErgebnis = { ok: true; daten: KundenDaten } | { ok: false; fe
 export function pruefeKundenEingabe(formData: FormData): EingabeErgebnis {
   const name = String(formData.get("name") ?? "").trim();
   const abrechnungszeitraum = String(formData.get("abrechnungszeitraum") ?? "");
+  const rundungsregel = String(formData.get("rundungsregel") ?? "");
 
   if (!name) return { ok: false, fehler: texte.kunden.fehlerName };
   const adresse = pruefeAdresse(formData);
@@ -23,5 +31,17 @@ export function pruefeKundenEingabe(formData: FormData): EingabeErgebnis {
     return { ok: false, fehler: texte.kunden.fehlerAbrechnungszeitraum };
   }
 
-  return { ok: true, daten: { name, ...adresse.adresse, abrechnungszeitraum } };
+  if (rundungsregel !== "" && !istRundungsregel(rundungsregel)) {
+    return { ok: false, fehler: texte.kunden.fehlerRundungsregel };
+  }
+
+  return {
+    ok: true,
+    daten: {
+      name,
+      ...adresse.adresse,
+      abrechnungszeitraum,
+      rundungsregel: rundungsregel === "" ? null : rundungsregel,
+    },
+  };
 }

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AktionsKnopf } from "@/app/aktions-knopf";
 import { NurFuerBuero } from "@/app/nur-fuer-buero";
 import { ObjektTabelle } from "@/app/objekte/objekt-tabelle";
+import { ladeFirma } from "@/lib/firma/verwaltung";
 import { ladeKunde } from "@/lib/kunden/verwaltung";
 import { ladeObjektliste } from "@/lib/objekte/verwaltung";
 import { createClient } from "@/lib/supabase/server";
@@ -19,7 +20,7 @@ export default function KundeBearbeiten({ params }: PageProps<"/kunden/[id]">) {
         <h1>{texte.kunden.titel}</h1>
         <Suspense fallback={<p>{texte.kunden.laedt}</p>}>
           <NurFuerBuero keineBerechtigung={texte.stammdaten.keineBerechtigung}>
-            {() => <Bearbeiten id={params.then((p) => p.id)} />}
+            {(ich) => <Bearbeiten id={params.then((p) => p.id)} firmaId={ich.firma_id} />}
           </NurFuerBuero>
         </Suspense>
       </main>
@@ -27,7 +28,13 @@ export default function KundeBearbeiten({ params }: PageProps<"/kunden/[id]">) {
   );
 }
 
-async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
+async function Bearbeiten({
+  id: idVersprechen,
+  firmaId,
+}: {
+  id: Promise<string>;
+  firmaId: string;
+}) {
   const id = await idVersprechen;
   const supabase = await createClient();
   const kunde = await ladeKunde(supabase, id);
@@ -41,7 +48,10 @@ async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
     );
   }
 
-  const objekte = await ladeObjektliste(supabase, { kundeId: kunde.id });
+  const [objekte, firma] = await Promise.all([
+    ladeObjektliste(supabase, { kundeId: kunde.id }),
+    ladeFirma(supabase, firmaId),
+  ]);
 
   return (
     <>
@@ -53,6 +63,7 @@ async function Bearbeiten({ id: idVersprechen }: { id: Promise<string> }) {
         vorgabe={kunde}
         knopf={texte.stammdaten.speichern}
         knopfLaeuft={texte.stammdaten.speichernLaeuft}
+        standardDerFirma={firma.rundungsregel}
       />
 
       {!kunde.archiviert && <p>{texte.kunden.archivierenHinweis}</p>}

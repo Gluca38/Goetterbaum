@@ -14,3 +14,12 @@ export type Abrechnungsart = (typeof ABRECHNUNGSARTEN)[number];
 export function istAbrechnungsart(wert: string): wert is Abrechnungsart {
   return (ABRECHNUNGSARTEN as readonly string[]).includes(wert);
 }
+
+// Rundungsregel der Firma (Standard) und eines Kunden (abweichend), wie in
+// der Datenbank (Typ public.rundungsregel).
+export const RUNDUNGSREGELN = ["minutengenau", "15-minuten"] as const;
+export type Rundungsregel = (typeof RUNDUNGSREGELN)[number];
+
+export function istRundungsregel(wert: string): wert is Rundungsregel {
+  return (RUNDUNGSREGELN as readonly string[]).includes(wert);
+}

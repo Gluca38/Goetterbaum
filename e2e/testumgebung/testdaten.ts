@@ -209,3 +209,34 @@ export async function legeZeiteintragAn(
   if (error) throw error;
   return data.id;
 }
+
+// Eine eigene Firma mit Büro-Zugang nur für einen Test, z. B. wenn er
+// Einstellungen der Firma ändert, auf die sich parallele Tests verlassen.
+// Der Test entfernt sie am Ende mit entferneFirma; Reste abgebrochener
+// Läufe räumt das Aufräumen über den Namen ab.
+export async function legeEigeneFirmaAn(): Promise<TestFirma> {
+  const supabase = dienstZugang()!;
+  const { data, error } = await supabase
+    .from("firma")
+    .insert({ name: `${TEST_FIRMA_PRAEFIX} eigene ${randomUUID().slice(0, 8)}` })
+    .select("id, name")
+    .single<{ id: string; name: string }>();
+  if (error) throw error;
+  return { ...data, buero: await legeZugangAn(supabase, data.id, { name: "Erna Eigene" }) };
+}
+
+export async function entferneFirma(firmaId: string) {
+  const supabase = dienstZugang()!;
+  const { data, error } = await supabase
+    .from("mitarbeiter")
+    .select("auth_user_id")
+    .eq("firma_id", firmaId)
+    .not("auth_user_id", "is", null);
+  if (error) throw error;
+  for (const { auth_user_id } of data) {
+    const { error } = await supabase.auth.admin.deleteUser(auth_user_id);
+    if (error) throw error;
+  }
+  const { error: fehler } = await supabase.from("firma").delete().eq("id", firmaId);
+  if (fehler) throw fehler;
+}

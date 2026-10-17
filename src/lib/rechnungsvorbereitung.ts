@@ -2,6 +2,7 @@
 // Rechnungsvorbereitung für einen Abrechnungszeitraum. Ein reiner
 // Baustein ohne Datenbank und Oberfläche; er ist die einzige Stelle, an
 // der Geld berechnet wird. Alle Beträge in Cent als ganze Zahlen.
+import type { Rundungsregel } from "./abrechnung";
 import { aufBerlinerTageVerteilt, berlinerMitternacht } from "./berliner-zeit";
 
 // Ein Monat als "JJJJ-MM", z. B. "2026-07".
@@ -9,7 +10,7 @@ export type Monat = string;
 
 export type Kunde = {
   // Die bereits aufgelöste Rundungsregel (Kunde oder Firmen-Standard).
-  rundungsregel: "minutengenau" | "15-minuten";
+  rundungsregel: Rundungsregel;
   abrechnungszeitraum: "monatlich" | "quartalsweise";
 };
 

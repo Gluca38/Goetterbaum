@@ -2,23 +2,27 @@
 
 import { useActionState } from "react";
 import { AdressFelder } from "@/app/adress-felder";
-import { ABRECHNUNGSZEITRAEUME } from "@/lib/abrechnung";
+import { RundungsregelOptionen } from "@/app/rundungsregel-optionen";
+import { ABRECHNUNGSZEITRAEUME, type Rundungsregel } from "@/lib/abrechnung";
 import type { KundenDaten } from "@/lib/kunden/eingabe";
 import { START, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { texte } from "@/texte";
 
-// Formular für Name, Rechnungsadresse und Abrechnungszeitraum, zum Anlegen
-// wie zum Bearbeiten.
+// Formular für Name, Rechnungsadresse, Abrechnungszeitraum und
+// Rundungsregel, zum Anlegen wie zum Bearbeiten. standardDerFirma zeigt,
+// was ohne eigene Rundungsregel gilt.
 export function KundenFormular({
   aktion,
   vorgabe,
   knopf,
   knopfLaeuft,
+  standardDerFirma,
 }: {
   aktion: (vorher: Rueckmeldung, formData: FormData) => Promise<Rueckmeldung>;
   vorgabe?: KundenDaten;
   knopf: string;
   knopfLaeuft: string;
+  standardDerFirma: Rundungsregel;
 }) {
   const [zustand, ausfuehren, laeuft] = useActionState(aktion, START);
 
@@ -45,6 +49,18 @@ export function KundenFormular({
                 {texte.abrechnungszeitraeume[zeitraum]}
               </option>
             ))}
+          </select>
+        </label>
+      </p>
+      <p>
+        <label>
+          {texte.kunden.rundungsregel}
+          <br />
+          <select name="rundungsregel" defaultValue={vorgabe?.rundungsregel ?? ""}>
+            <option value="">
+              {texte.rundungsregelDerFirma(texte.rundungsregeln[standardDerFirma])}
+            </option>
+            <RundungsregelOptionen />
           </select>
         </label>
       </p>

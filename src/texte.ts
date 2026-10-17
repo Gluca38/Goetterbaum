@@ -1,6 +1,6 @@
 // Alle Texte der Oberfläche an einer Stelle, damit später weitere
 // Sprachen ohne Umbau nachgerüstet werden können.
-import type { Abrechnungsart, Abrechnungszeitraum } from "@/lib/abrechnung";
+import type { Abrechnungsart, Abrechnungszeitraum, Rundungsregel } from "@/lib/abrechnung";
 import type { Rolle } from "@/lib/rollen";
 import type { Sparte } from "@/lib/sparte";
 
@@ -31,6 +31,8 @@ export const texte = {
     zeiteintraegeAnsehen: "Zeiteinträge ansehen",
     unvollstaendigePruefen: "Unvollständige Zeiteinträge prüfen",
     zeiteintraegeFreigeben: "Zeiteinträge freigeben",
+    rechnungsvorbereitung: "Rechnungsvorbereitung",
+    einstellungen: "Einstellungen der Firma",
     fuerAndereErfassen: "Für andere erfassen",
   },
   passwortVergessen: {
@@ -134,6 +136,8 @@ export const texte = {
       "Archivierte Kunden erscheinen in keiner Auswahlliste mehr. Ihre Objekte werden mit archiviert. Gelöscht wird nichts.",
     fehlerName: "Bitte gib einen Namen ein.",
     fehlerAbrechnungszeitraum: "Bitte wähle einen Abrechnungszeitraum.",
+    rundungsregel: "Rundungsregel",
+    fehlerRundungsregel: "Bitte wähle eine Rundungsregel.",
   },
   objekte: {
     titel: "Objekte",
@@ -410,6 +414,56 @@ export const texte = {
     fehlerUnbekannt:
       "Das hat nicht geklappt. Bitte lade die Seite neu und versuche es noch einmal.",
   },
+  rechnungsvorbereitung: {
+    titel: "Rechnungsvorbereitung",
+    laedt: "Lädt …",
+    keineBerechtigung: "Die Rechnungsvorbereitung darf nur das Büro sehen.",
+    hinweis:
+      "Wähle einen Kunden und den ersten Monat des Zeitraums. Vorgeschlagen wird der zuletzt abgeschlossene Abrechnungszeitraum des Kunden. Es fließen nur freigegebene Zeiteinträge ein.",
+    kunde: "Kunde",
+    kundeWaehlen: "Bitte wählen",
+    monat: "Monat",
+    anzeigen: "Anzeigen",
+    keineKunden: "Noch keine Kunden angelegt.",
+    kundeNichtGefunden: "Diesen Kunden gibt es nicht.",
+    ueberschrift: (kunde: string, zeitraum: string) => `${kunde}: ${zeitraum}`,
+    rundungsregel: (regel: string) => `Rundungsregel: ${regel}`,
+    keinePositionen: "In diesem Zeitraum gibt es nichts abzurechnen.",
+    warnungNichtFreigegeben: (anzahl: number) =>
+      anzahl === 1
+        ? "Achtung: Im Zeitraum liegt 1 Zeiteintrag dieses Kunden, der noch nicht freigegeben ist. Er fehlt in der Rechnungsvorbereitung."
+        : `Achtung: Im Zeitraum liegen ${anzahl} Zeiteinträge dieses Kunden, die noch nicht freigegeben sind. Sie fehlen in der Rechnungsvorbereitung.`,
+    zurFreigabe: "Zur Freigabe",
+    spaltePosition: "Position",
+    spalteObjekt: "Objekt",
+    spalteTaetigkeit: "Tätigkeit",
+    spalteMonat: "Monat",
+    spalteStunden: "Stunden",
+    spalteMinuten: "Minuten",
+    spalteStundensatz: "Stundensatz",
+    spalteBetrag: "Betrag",
+    summe: "Summe",
+    stunden: (stunden: string) => `${stunden} Std.`,
+    positionen: {
+      pauschale: "Pauschale",
+      stunden: "Stunden",
+      "zusatzauftrag-stunden": "Zusatzauftrag nach Stunden",
+      "zusatzauftrag-festbetrag": "Zusatzauftrag mit Festbetrag",
+    },
+    unbekannt: "unbekannt",
+    csvExport: "Als CSV-Datei herunterladen",
+    csvDateiname: (kunde: string, monat: string) => `Rechnungsvorbereitung ${kunde} ${monat}.csv`,
+  },
+  einstellungen: {
+    titel: "Einstellungen der Firma",
+    laedt: "Lädt …",
+    keineBerechtigung: "Die Einstellungen der Firma darf nur das Büro ändern.",
+    rundungsregel: "Standard-Rundungsregel",
+    fehlerRundungsregel: "Bitte wähle eine Rundungsregel.",
+    rundungsregelHinweis:
+      "Gilt für die Stundenabrechnung aller Kunden, für die keine eigene Rundungsregel festgelegt ist. Gerundet wird die Summe je Objekt, Tätigkeit und Kalendertag.",
+  },
+  rundungsregelDerFirma: (regel: string) => `Standard der Firma (${regel})`,
   abrechnungszeitraeume: {
     monatlich: "Monatlich",
     quartalsweise: "Quartalsweise",
@@ -418,6 +472,10 @@ export const texte = {
     reinigung: "Reinigung",
     garten: "Garten",
   } satisfies Record<Sparte, string>,
+  rundungsregeln: {
+    minutengenau: "Minutengenau",
+    "15-minuten": "Auf angefangene 15 Minuten",
+  } satisfies Record<Rundungsregel, string>,
   abrechnungsarten: {
     pauschale: "Pauschale",
     stunden: "Stundenabrechnung",
