@@ -482,7 +482,6 @@ export const texte = {
       "Die Abrechnung wurde nicht zurückgenommen. Bitte lade die Seite neu und versuche es noch einmal.",
   },
   abrechnung: {
-    markierung: "Abgerechnet",
     abgerechnet:
       "Abgerechnet. Der Zeiteintrag ist für alle gesperrt, bis das Büro die Abrechnung in der Rechnungsvorbereitung zurücknimmt.",
     gesperrt:

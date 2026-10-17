@@ -17,12 +17,15 @@
 --
 -- Abrechnen und Zurücknehmen gehen nur über die beiden Funktionen unten;
 -- sie setzen Zeitpunkt und Nutzer selbst. Direkt schreiben darf niemand
--- in die neuen Tabellen oder in abgerechnet_in.
+-- in die neuen Tabellen oder in abgerechnet_in, auch der Dienstschlüssel
+-- nicht (ein Trigger prüft, dass eine der Funktionen läuft).
 --
 -- Zugriffsrechte, die sich ändern:
 -- * Abgerechnete Zeiteinträge sind für alle gesperrt, auch fürs Büro und
 --   für den Dienstschlüssel. Auch die Freigabe lässt sich nicht mehr
 --   zurücknehmen. Erst die Rücknahme der Abrechnung gibt sie wieder frei.
+--   Löschen kann Zeiteinträge wie bisher nur der Dienstschlüssel, und der
+--   nur beim Aufräumen nach Tests.
 -- * Abrechnungen sieht nur das Büro der eigenen Firma.
 
 begin;
@@ -137,8 +140,9 @@ comment on column public.zeiteintrag.abgerechnet_in is
 create index zeiteintrag_abgerechnet_in_idx on public.zeiteintrag (abgerechnet_in);
 
 -- Ein abgerechneter Zeiteintrag ändert sich nicht mehr, für niemanden.
--- Erlaubt ist allein, abgerechnet_in zu leeren; das tut nur
--- abrechnung_zuruecknehmen, denn die Spalte darf sonst niemand ändern. Der
+-- abgerechnet_in ändern nur die beiden Funktionen unten; sie melden das
+-- für ihre eigene Transaktion über die Einstellung privat.abrechnung_laeuft.
+-- Über die Schnittstelle lässt sich die Einstellung nicht setzen. Der
 -- Name sorgt dafür, dass dieser Trigger vor den anderen läuft und die
 -- Änderung so sieht, wie sie geschickt wurde.
 create function privat.zeiteintrag_abgerechnet_sperren()
@@ -147,6 +151,12 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  if new.abgerechnet_in is distinct from old.abgerechnet_in
+     and current_setting('privat.abrechnung_laeuft', true) is distinct from 'ja'
+  then
+    raise exception 'abgerechnet_in ändern nur Abrechnen und Zurücknehmen.'
+      using errcode = 'insufficient_privilege';
+  end if;
   if old.abgerechnet_in is not null
      and (to_jsonb(new) - 'abgerechnet_in') is distinct from (to_jsonb(old) - 'abgerechnet_in')
   then
@@ -170,9 +180,11 @@ revoke all on function privat.zeiteintrag_abgerechnet_sperren() from public;
 
 -- Markiert eine Rechnungsvorbereitung als abgerechnet und gibt die
 -- Kennung der neuen Abrechnung zurück. Positionen und Summe kommen aus dem
--- Rechenbaustein der App. Die Datenbank prüft, dass alles Übergebene zum
+-- Rechenbaustein der App; nachgerechnet wird hier nicht, denn Geld rechnet
+-- nur der Rechenbaustein. Die Datenbank prüft, dass alles Übergebene zum
 -- Kunden und Zeitraum gehört und noch nicht abgerechnet ist: Zeiteinträge
--- freigegeben, in Objekten des Kunden, vor dem Ende des Zeitraums;
+-- freigegeben, in Objekten des Kunden, im Zeitraum beginnend (wie in der
+-- Rechnungsvorbereitung);
 -- Pauschal-Monate in Pauschal-Objekten des Kunden, im Zeitraum. Passt
 -- etwas nicht, wird nichts gespeichert.
 --
@@ -193,8 +205,9 @@ as $$
 declare
   ich uuid := privat.meine_mitarbeiter_id();
   firma uuid := privat.meine_firma_id();
-  zeitraum public.abrechnungszeitraum;
+  kunden_abrechnungszeitraum public.abrechnungszeitraum;
   anzahl_monate integer;
+  zeitraum_beginn timestamptz;
   zeitraum_ende timestamptz;
   neu uuid;
   anzahl integer;
@@ -206,7 +219,7 @@ begin
 
   -- Sperrt den Kunden bis zum Ende: Zwei gleichzeitige Abrechnungen
   -- desselben Kunden warten aufeinander und rechnen nichts doppelt ab.
-  select k.abrechnungszeitraum into zeitraum
+  select k.abrechnungszeitraum into kunden_abrechnungszeitraum
   from public.kunde k
   where k.id = fuer_kunde and k.firma_id = firma
   for update;
@@ -214,13 +227,18 @@ begin
     raise exception 'Diesen Kunden gibt es nicht.' using errcode = 'no_data_found';
   end if;
 
-  anzahl_monate := case when zeitraum = 'quartalsweise' then 3 else 1 end;
+  anzahl_monate := case when kunden_abrechnungszeitraum = 'quartalsweise' then 3 else 1 end;
   if extract(day from ab_monat) <> 1
-     or (zeitraum = 'quartalsweise' and extract(month from ab_monat) not in (1, 4, 7, 10))
+     or (
+       kunden_abrechnungszeitraum = 'quartalsweise'
+       and extract(month from ab_monat) not in (1, 4, 7, 10)
+     )
   then
     raise exception 'Der Zeitraum passt nicht zum Abrechnungszeitraum des Kunden.'
       using errcode = 'check_violation';
   end if;
+  -- Tage gelten in Berlin.
+  zeitraum_beginn := ab_monat::timestamp at time zone 'Europe/Berlin';
   zeitraum_ende := (ab_monat + make_interval(months => anzahl_monate))::timestamp
     at time zone 'Europe/Berlin';
 
@@ -233,8 +251,10 @@ begin
   insert into public.abrechnung
     (firma_id, kunde_id, erster_monat, abrechnungszeitraum, positionen, summe_cent,
      abgerechnet_von)
-  values (firma, fuer_kunde, ab_monat, zeitraum, aufstellung, summe, ich)
+  values (firma, fuer_kunde, ab_monat, kunden_abrechnungszeitraum, aufstellung, summe, ich)
   returning id into neu;
+
+  perform set_config('privat.abrechnung_laeuft', 'ja', true);
 
   update public.zeiteintrag z
   set abgerechnet_in = neu
@@ -242,6 +262,7 @@ begin
     and z.firma_id = firma
     and z.abgerechnet_in is null
     and z.freigegeben_am is not null
+    and z.beginn >= zeitraum_beginn
     and z.beginn < zeitraum_ende
     and z.objekt_id in (select o.id from public.objekt o where o.kunde_id = fuer_kunde);
   get diagnostics anzahl = row_count;
@@ -294,6 +315,7 @@ begin
       using errcode = 'no_data_found';
   end if;
 
+  perform set_config('privat.abrechnung_laeuft', 'ja', true);
   update public.zeiteintrag z set abgerechnet_in = null where z.abgerechnet_in = welche;
   update public.abrechnung_pauschal_monat p set gueltig = false where p.abrechnung_id = welche;
 end

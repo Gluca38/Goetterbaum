@@ -19,8 +19,9 @@ import {
 const UHR_SPIELRAUM_MS = 2 * 60 * 1000;
 
 // Ein monatlich abgerechneter Kunde mit einem Pauschal-Objekt und zwei
-// freigegebenen Zeiteinträgen im März 2026 (Winterzeit, UTC + 1 Stunde),
-// dazu einer, der noch nicht freigegeben ist.
+// freigegebenen Zeiteinträgen, die im März 2026 beginnen, dazu einer, der
+// noch nicht freigegeben ist, und einer, der in Berlin schon im April
+// beginnt. Seit dem 29.03. gilt die Sommerzeit (UTC + 2 Stunden).
 async function abrechenbarerKunde(firmaId: string) {
   const dienst = dienstZugang()!;
   const { kundeId, objektId } = await legeKundeMitObjektAn(dienst, firmaId);
@@ -37,16 +38,18 @@ async function abrechenbarerKunde(firmaId: string) {
     });
   const freigegebene = [
     await eintrag("2026-03-09T06:01:17Z", "2026-03-09T08:14:52Z"),
-    // Der letzte Abend des Monats in Berlin.
-    await eintrag("2026-03-31T20:30:08Z", "2026-03-31T21:41:39Z"),
+    // 31.03., 23:52:08 bis 00:31:39 am 01.04. in Berlin: gehört zum März.
+    await eintrag("2026-03-31T21:52:08Z", "2026-03-31T22:31:39Z"),
   ];
+  // 01.04., 00:40:51 in Berlin, in UTC noch der 31.03.
+  const april = await eintrag("2026-03-31T22:40:51Z", "2026-03-31T23:10:02Z");
   const { error } = await dienst
     .from("zeiteintrag")
     .update({ freigegeben_am: "2026-04-01T08:00:00Z" })
-    .in("id", freigegebene);
+    .in("id", [...freigegebene, april]);
   if (error) throw error;
   const offen = await eintrag("2026-03-16T07:00:44Z", "2026-03-16T09:02:03Z");
-  return { kundeId, objektId, mitarbeiter, freigegebene, offen };
+  return { kundeId, objektId, mitarbeiter, freigegebene, offen, april };
 }
 
 type Kunde = Awaited<ReturnType<typeof abrechenbarerKunde>>;
@@ -147,6 +150,17 @@ test("Nur das Büro der eigenen Firma rechnet ab; wann und von wem setzt die Dat
     .update({ abgerechnet_in: null })
     .eq("id", kunde.freigegebene[0]);
   expect(verweis.error?.code).toBe("42501");
+  // Auch der Dienstschlüssel setzt den Verweis nicht selbst.
+  for (const [wert, id] of [
+    [null, kunde.freigegebene[0]],
+    [kunde.kundeId, kunde.offen],
+  ] as const) {
+    const { error } = await dienstZugang()!
+      .from("zeiteintrag")
+      .update({ abgerechnet_in: wert })
+      .eq("id", id);
+    expect(error?.code).toBe("42501");
+  }
 
   const { data: id, error } = await markiere(alsBuero, kunde);
   expect(error).toBeNull();
@@ -234,8 +248,12 @@ test("Nichts wird doppelt abgerechnet, und nur Freigegebenes des Kunden im Zeitr
     { eintraege: [andererKunde.freigegebene[0]], monate: [] },
     { eintraege: [], monate: [{ objekt_id: andererKunde.objektId, monat: "2026-03-01" }] },
     { eintraege: [], monate: [{ objekt_id: kunde.objektId, monat: "2026-04-01" }] },
-    // Der Eintrag vom 31.03. gehört nicht in den Februar.
+    // Der Eintrag vom 31.03. gehört nicht in den Februar, die März-Einträge
+    // nicht in den April und der Eintrag kurz nach Mitternacht am 01.04.
+    // nicht in den März.
     { eintraege: kunde.freigegebene, monate: [], abMonat: "2026-02-01" },
+    { eintraege: kunde.freigegebene, monate: [], abMonat: "2026-04-01" },
+    { eintraege: [kunde.april], monate: [] },
     { eintraege: [], monate: [] },
   ];
   for (const auswahl of falsch) {
@@ -247,13 +265,31 @@ test("Nichts wird doppelt abgerechnet, und nur Freigegebenes des Kunden im Zeitr
 
   const { data: id } = await markiere(alsBuero, kunde);
   expect(id).toBeTruthy();
+  const { error: imApril } = await markiere(alsBuero, kunde, {
+    eintraege: [kunde.april],
+    monate: [],
+    abMonat: "2026-04-01",
+  });
+  expect(imApril).toBeNull();
 
   // Ein zweites Mal geht weder ein Zeiteintrag noch der Pauschal-Monat.
   const eintragNochmal = await markiere(alsBuero, kunde, { monate: [] });
   expect(eintragNochmal.error?.code).toBe("23514");
   const monatNochmal = await markiere(alsBuero, kunde, { eintraege: [] });
   expect(monatNochmal.error?.code).toBe("23505");
-  expect(await abrechnungenVon(kunde.kundeId)).toHaveLength(1);
+  expect(await abrechnungenVon(kunde.kundeId)).toHaveLength(2);
+
+  // Quartalsweise beginnt ein Zeitraum nur mit dem ersten Monat eines
+  // Quartals.
+  const { error } = await dienstZugang()!
+    .from("kunde")
+    .update({ abrechnungszeitraum: "quartalsweise" })
+    .eq("id", andererKunde.kundeId);
+  if (error) throw error;
+  const quartalsmitte = await markiere(alsBuero, andererKunde, { monate: [] });
+  expect(quartalsmitte.error?.code).toBe("23514");
+  const quartal = await markiere(alsBuero, andererKunde, { monate: [], abMonat: "2026-01-01" });
+  expect(quartal.error).toBeNull();
 });
 
 test("Die Rücknahme macht wieder abrechenbar und steht im Protokoll", async () => {

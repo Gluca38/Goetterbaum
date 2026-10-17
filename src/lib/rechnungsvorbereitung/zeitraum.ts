@@ -21,6 +21,16 @@ const MONATSNAMEN = new Intl.DateTimeFormat("de-DE", {
   timeZone: "UTC",
 });
 
+// Die Datenbank speichert einen Monat als Datum seines ersten Tages
+// ("JJJJ-MM-01").
+export function ersterTag(monat: Monat): string {
+  return `${monat}-01`;
+}
+
+export function monatVon(ersterTag: string): Monat {
+  return ersterTag.slice(0, 7);
+}
+
 // Ein Monat ("JJJJ-MM") als Text, z. B. „März 2026“.
 export function monatAlsText(monat: Monat): string {
   return MONATSNAMEN.format(Date.parse(`${monat}-01T00:00:00Z`));

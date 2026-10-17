@@ -4,6 +4,7 @@
 // Rechenbaustein.
 import { createHash } from "node:crypto";
 import type { Position, Rechnungsvorbereitung } from "@/lib/rechnungsvorbereitung";
+import { ersterTag } from "./zeitraum";
 
 export type AbrechnungsUmfang = {
   zeiteintragIds: string[];
@@ -19,7 +20,7 @@ export function abrechnungsUmfang(ergebnis: Rechnungsvorbereitung): AbrechnungsU
   return {
     zeiteintragIds: ergebnis.zeiteintragIds,
     pauschalMonate: ergebnis.positionen.flatMap((p) =>
-      p.art === "pauschale" ? [{ objekt_id: p.objektId, monat: `${p.monat}-01` }] : [],
+      p.art === "pauschale" ? [{ objekt_id: p.objektId, monat: ersterTag(p.monat) }] : [],
     ),
     summeCent: ergebnis.summeCent,
     positionen: ergebnis.positionen,

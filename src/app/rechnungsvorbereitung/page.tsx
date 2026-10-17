@@ -12,7 +12,7 @@ import {
   ladeRechnungsvorbereitungAusAdresse,
   type RechnungsvorbereitungAusAdresse,
 } from "@/lib/rechnungsvorbereitung/verwaltung";
-import { gewaehlterZeitraum } from "@/lib/rechnungsvorbereitung/zeitraum";
+import { gewaehlterZeitraum, monatVon } from "@/lib/rechnungsvorbereitung/zeitraum";
 import { rechnungsZeilen, stundenAlsText } from "@/lib/rechnungsvorbereitung/zeilen";
 import { createClient } from "@/lib/supabase/server";
 import { zeitAlsText } from "@/lib/zeiterfassung/protokoll";
@@ -201,7 +201,7 @@ async function Abrechnungen({ kundeId }: { kundeId: string }) {
               <tr key={a.id}>
                 <td>
                   {
-                    gewaehlterZeitraum(a.erster_monat.slice(0, 7), a.abrechnungszeitraum, 0)
+                    gewaehlterZeitraum(monatVon(a.erster_monat), a.abrechnungszeitraum, 0)
                       .bezeichnung
                   }
                 </td>

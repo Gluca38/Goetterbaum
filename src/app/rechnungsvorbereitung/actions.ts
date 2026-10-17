@@ -5,6 +5,7 @@ import { alsBuero } from "@/lib/als-buero";
 import { istId } from "@/lib/id";
 import { abrechnungsStand, abrechnungsUmfang } from "@/lib/rechnungsvorbereitung/abrechnung";
 import { ladeRechnungsvorbereitungAusAdresse } from "@/lib/rechnungsvorbereitung/verwaltung";
+import { ersterTag } from "@/lib/rechnungsvorbereitung/zeitraum";
 import { FEHLER, OK, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { texte } from "@/texte";
 
@@ -34,7 +35,7 @@ export async function alsAbgerechnetMarkieren(
 
   const { error } = await supabase.rpc("als_abgerechnet_markieren", {
     fuer_kunde: geladen.kunde.id,
-    ab_monat: `${geladen.zeitraum.ersterMonat}-01`,
+    ab_monat: ersterTag(geladen.zeitraum.ersterMonat),
     eintraege: umfang.zeiteintragIds,
     monate: umfang.pauschalMonate,
     aufstellung: umfang.positionen,

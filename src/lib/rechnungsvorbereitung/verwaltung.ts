@@ -12,7 +12,7 @@ import {
   type Zeiteintrag,
 } from "@/lib/rechnungsvorbereitung";
 import { ladeKundenStundensaetze } from "@/lib/stundensaetze/verwaltung";
-import { gewaehlterZeitraum, type GewaehlterZeitraum } from "./zeitraum";
+import { gewaehlterZeitraum, monatVon, type GewaehlterZeitraum } from "./zeitraum";
 import type { Namen } from "./zeilen";
 
 // So viele Zeilen liefert die Schnittstelle höchstens auf einmal
@@ -170,8 +170,7 @@ async function ladeAbgerechnetePauschalMonate(
     .eq("gueltig", true)
     .returns<{ objekt_id: string; monat: string }[]>();
   if (error) throw error;
-  // Die Datenbank speichert den ersten Tag ("JJJJ-MM-01").
-  return data.map((m) => ({ objektId: m.objekt_id, monat: m.monat.slice(0, 7) }));
+  return data.map((m) => ({ objektId: m.objekt_id, monat: monatVon(m.monat) }));
 }
 
 async function zaehleNichtFreigegebene(

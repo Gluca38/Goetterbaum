@@ -52,9 +52,9 @@ test("Der Stand bleibt gleich, solange sich nichts Abzurechnendes ändert", () =
   expect(abrechnungsStand(ERGEBNIS)).toMatch(/^[0-9a-f]{64}$/);
 });
 
-test("Ein spät freigegebener Eintrag oder ein anderer Betrag ändert den Stand", () => {
-  const mehrEintraege = { ...ERGEBNIS, zeiteintragIds: [EINTRAG_1] };
-  expect(abrechnungsStand(mehrEintraege)).not.toBe(abrechnungsStand(ERGEBNIS));
+test("Ein anderer Zeiteintrag oder ein anderer Betrag ändert den Stand", () => {
+  const ohneEintrag2 = { ...ERGEBNIS, zeiteintragIds: [EINTRAG_1] };
+  expect(abrechnungsStand(ohneEintrag2)).not.toBe(abrechnungsStand(ERGEBNIS));
 
   const [a, b, stunden] = ERGEBNIS.positionen;
   const andererSatz = {
