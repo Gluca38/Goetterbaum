@@ -2,10 +2,7 @@
 // Rechnungsvorbereitung für einen Abrechnungszeitraum. Ein reiner
 // Baustein ohne Datenbank und Oberfläche; er ist die einzige Stelle, an
 // der Geld berechnet wird. Alle Beträge in Cent als ganze Zahlen.
-import {
-  aufBerlinerTageVerteilt,
-  berlinerMitternacht,
-} from "./berliner-zeit";
+import { aufBerlinerTageVerteilt, berlinerMitternacht } from "./berliner-zeit";
 
 // Ein Monat als "JJJJ-MM", z. B. "2026-07".
 export type Monat = string;

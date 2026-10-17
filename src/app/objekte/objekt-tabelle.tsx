@@ -11,13 +11,7 @@ export function abrechnungAlsText(objekt: Objekt): string {
 }
 
 // Tabelle mit Objekten. Archivierte sind als solche gekennzeichnet.
-export function ObjektTabelle({
-  objekte,
-  mitKunde,
-}: {
-  objekte: Objekt[];
-  mitKunde: boolean;
-}) {
+export function ObjektTabelle({ objekte, mitKunde }: { objekte: Objekt[]; mitKunde: boolean }) {
   return (
     <table>
       <thead>

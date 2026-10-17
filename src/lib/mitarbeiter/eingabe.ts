@@ -7,15 +7,15 @@ export type MitarbeiterDaten = {
   rolle: Rolle;
 };
 
-export type EingabeErgebnis =
-  | { ok: true; daten: MitarbeiterDaten }
-  | { ok: false; fehler: string };
+export type EingabeErgebnis = { ok: true; daten: MitarbeiterDaten } | { ok: false; fehler: string };
 
 // Prüft die Angaben aus dem Mitarbeiter-Formular und bringt sie in eine
 // einheitliche Form.
 export function pruefeMitarbeiterEingabe(formData: FormData): EingabeErgebnis {
   const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const rolle = String(formData.get("rolle") ?? "");
 
   if (!name) return { ok: false, fehler: texte.mitarbeiter.fehlerName };

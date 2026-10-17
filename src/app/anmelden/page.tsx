@@ -17,9 +17,7 @@ export default function Anmelden({ searchParams }: PageProps<"/anmelden">) {
         </Suspense>
         <AnmeldeFormular />
         <p>
-          <Link href="/passwort-vergessen">
-            {texte.anmelden.passwortVergessen}
-          </Link>
+          <Link href="/passwort-vergessen">{texte.anmelden.passwortVergessen}</Link>
         </p>
       </main>
     </div>
@@ -27,11 +25,7 @@ export default function Anmelden({ searchParams }: PageProps<"/anmelden">) {
 }
 
 // Hinweis, wenn ein Link aus einer Mail nicht (mehr) gültig war.
-async function LinkHinweis({
-  fehler,
-}: {
-  fehler: Promise<string | string[] | undefined>;
-}) {
+async function LinkHinweis({ fehler }: { fehler: Promise<string | string[] | undefined> }) {
   if ((await fehler) !== "link") return null;
   return <p role="alert">{texte.anmelden.fehlerLink}</p>;
 }

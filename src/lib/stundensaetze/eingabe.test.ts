@@ -11,9 +11,7 @@ const TAETIGKEIT_ID = "3f2b8c1e-0000-4000-8000-000000000002";
 
 test("Ein abweichender Stundensatz für eine Tätigkeit wird centgenau übernommen", () => {
   expect(
-    pruefeKundenStundensatzEingabe(
-      formular({ taetigkeit_id: TAETIGKEIT_ID, stundensatz: "29,9" }),
-    ),
+    pruefeKundenStundensatzEingabe(formular({ taetigkeit_id: TAETIGKEIT_ID, stundensatz: "29,9" })),
   ).toEqual({
     ok: true,
     daten: { taetigkeit_id: TAETIGKEIT_ID, stundensatz_cent: 2990 },

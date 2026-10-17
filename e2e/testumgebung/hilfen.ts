@@ -1,10 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import {
-  dienstZugang,
-  ladeTestdaten,
-  oeffentlicherZugang,
-  type TestZugang,
-} from "./testdaten";
+import { dienstZugang, ladeTestdaten, oeffentlicherZugang, type TestZugang } from "./testdaten";
 
 // Die Testdaten aus dem Setup. Fehlen sie (nur lokal ohne geheimen
 // Schlüssel möglich), wird der Test übersprungen.
@@ -77,9 +72,7 @@ export async function linkAusMail(email: string, typ: "invite" | "recovery") {
 }
 
 export async function legePasswortFest(page: Page, passwort: string) {
-  await expect(
-    page.getByRole("heading", { name: "Passwort festlegen" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Passwort festlegen" })).toBeVisible();
   await feld(page, "Neues Passwort").fill(passwort);
   await feld(page, "Passwort wiederholen").fill(passwort);
   await page.getByRole("button", { name: "Passwort speichern" }).click();

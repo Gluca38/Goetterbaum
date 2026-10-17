@@ -13,7 +13,9 @@ export default function MitarbeiterUebersicht() {
       <main className={styles.main}>
         <h1>{texte.mitarbeiter.titel}</h1>
         <Suspense fallback={<p>{texte.mitarbeiter.laedt}</p>}>
-          <NurFuerBuero keineBerechtigung={texte.mitarbeiter.keineBerechtigung}>{() => <Liste />}</NurFuerBuero>
+          <NurFuerBuero keineBerechtigung={texte.mitarbeiter.keineBerechtigung}>
+            {() => <Liste />}
+          </NurFuerBuero>
         </Suspense>
       </main>
     </div>

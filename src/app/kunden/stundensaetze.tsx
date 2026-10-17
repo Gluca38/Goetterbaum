@@ -56,10 +56,7 @@ export async function Stundensaetze({
                   <td>{euroAlsText(t.standard_stundensatz_cent)}</td>
                   <td>{abweichend ? euroAlsText(abweichend.stundensatz_cent) : "–"}</td>
                   <td>
-                    {texte.stundensaetze.gilt(
-                      euroAlsText(gilt.stundensatzCent),
-                      gilt.abweichend,
-                    )}
+                    {texte.stundensaetze.gilt(euroAlsText(gilt.stundensatzCent), gilt.abweichend)}
                   </td>
                   <td>
                     {abweichend && (

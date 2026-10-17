@@ -33,9 +33,7 @@ export default function NeuesObjekt({ searchParams }: PageProps<"/objekte/neu">)
 async function Anlegen({ kundeId }: { kundeId: Promise<string | undefined> }) {
   const id = await kundeId;
   // Archivierte Kunden stehen nicht zur Auswahl.
-  const kunden = (await ladeKundenliste(await createClient())).filter(
-    (k) => !k.archiviert,
-  );
+  const kunden = (await ladeKundenliste(await createClient())).filter((k) => !k.archiviert);
   const vorauswahl = kunden.find((k) => k.id === id);
   const zurueck = vorauswahl
     ? { href: `/kunden/${vorauswahl.id}`, text: texte.kunden.zumKunden }
@@ -45,8 +43,7 @@ async function Anlegen({ kundeId }: { kundeId: Promise<string | undefined> }) {
     <>
       {kunden.length === 0 ? (
         <p>
-          {texte.objekte.keineAktivenKunden}{" "}
-          <Link href="/kunden/neu">{texte.kunden.neu}</Link>
+          {texte.objekte.keineAktivenKunden} <Link href="/kunden/neu">{texte.kunden.neu}</Link>
         </p>
       ) : (
         <ObjektFormular

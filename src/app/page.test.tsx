@@ -4,7 +4,5 @@ import Home from "./page";
 
 test("Startseite zeigt den App-Namen als Überschrift", () => {
   render(<Home />);
-  expect(
-    screen.getByRole("heading", { level: 1, name: "Götterbaum" }),
-  ).toBeDefined();
+  expect(screen.getByRole("heading", { level: 1, name: "Götterbaum" })).toBeDefined();
 });

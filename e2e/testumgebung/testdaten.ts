@@ -61,9 +61,7 @@ export function dienstZugang(): SupabaseClient | null {
 export function oeffentlicherZugang(): SupabaseClient {
   const oeffentlich = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !oeffentlich) {
-    throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY fehlen.",
-    );
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY fehlen.");
   }
   return zugangMit(oeffentlich);
 }
@@ -73,11 +71,7 @@ export function oeffentlicherZugang(): SupabaseClient {
 export async function legeZugangAn(
   supabase: SupabaseClient,
   firmaId: string,
-  {
-    name,
-    rolle = "buero",
-    aktiv = true,
-  }: { name: string; rolle?: Rolle; aktiv?: boolean },
+  { name, rolle = "buero", aktiv = true }: { name: string; rolle?: Rolle; aktiv?: boolean },
 ): Promise<TestZugang> {
   const email = testEmail();
   const passwort = randomBytes(18).toString("base64url");

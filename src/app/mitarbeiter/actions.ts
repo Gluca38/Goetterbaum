@@ -10,10 +10,7 @@ import { FEHLER, OK, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { createDienstClient } from "@/lib/supabase/dienst";
 import { texte } from "@/texte";
 
-export async function anlegen(
-  _vorher: Rueckmeldung,
-  formData: FormData,
-): Promise<Rueckmeldung> {
+export async function anlegen(_vorher: Rueckmeldung, formData: FormData): Promise<Rueckmeldung> {
   const { supabase, ich } = await alsBuero();
   const eingabe = pruefeMitarbeiterEingabe(formData);
   if (!eingabe.ok) return FEHLER(eingabe.fehler);
@@ -44,21 +41,16 @@ export async function speichern(
   if (!eingabe.ok) return FEHLER(eingabe.fehler);
   const neu = eingabe.daten;
 
-  const regelverstoss = pruefeAenderung(
-    bestand,
-    { ...neu, aktiv: bestand.aktiv },
-    ich.id,
-  );
+  const regelverstoss = pruefeAenderung(bestand, { ...neu, aktiv: bestand.aktiv }, ich.id);
   if (regelverstoss) return FEHLER(regelverstoss);
 
   // Gibt es schon einen Login, zieht dessen E-Mail mit. So kommt eine
   // erneute Einladung an der neuen Adresse an, und wer schon ein
   // Passwort hat, meldet sich künftig mit der neuen Adresse an.
   if (bestand.authUserId && neu.email && neu.email !== bestand.email) {
-    const { error } = await createDienstClient().auth.admin.updateUserById(
-      bestand.authUserId,
-      { email: neu.email },
-    );
+    const { error } = await createDienstClient().auth.admin.updateUserById(bestand.authUserId, {
+      email: neu.email,
+    });
     if (error) {
       if (error.code === "email_exists") {
         return FEHLER(texte.mitarbeiter.einladung.fehlerEmailVergeben);
@@ -68,10 +60,7 @@ export async function speichern(
     }
   }
 
-  const { error } = await supabase
-    .from("mitarbeiter")
-    .update(neu)
-    .eq("id", id);
+  const { error } = await supabase.from("mitarbeiter").update(neu).eq("id", id);
   if (error) {
     console.error("Mitarbeiter speichern fehlgeschlagen", error);
     return FEHLER(texte.mitarbeiter.fehlerUnbekannt);
@@ -81,10 +70,7 @@ export async function speichern(
   return OK(texte.mitarbeiter.gespeichert);
 }
 
-export async function aktivSetzen(
-  id: string,
-  aktiv: boolean,
-): Promise<Rueckmeldung> {
+export async function aktivSetzen(id: string, aktiv: boolean): Promise<Rueckmeldung> {
   const { supabase, ich } = await alsBuero();
   const bestand = await ladeMitarbeiter(supabase, id);
   if (!bestand) return FEHLER(texte.mitarbeiter.nichtGefunden);
@@ -92,10 +78,7 @@ export async function aktivSetzen(
   const regelverstoss = pruefeAenderung(bestand, { ...bestand, aktiv }, ich.id);
   if (regelverstoss) return FEHLER(regelverstoss);
 
-  const { error } = await supabase
-    .from("mitarbeiter")
-    .update({ aktiv })
-    .eq("id", id);
+  const { error } = await supabase.from("mitarbeiter").update({ aktiv }).eq("id", id);
   if (error) {
     console.error("Aktiv-Status ändern fehlgeschlagen", error);
     return FEHLER(texte.mitarbeiter.fehlerUnbekannt);
@@ -105,9 +88,7 @@ export async function aktivSetzen(
   return OK();
 }
 
-export async function einladen(
-  id: string,
-): Promise<Rueckmeldung> {
+export async function einladen(id: string): Promise<Rueckmeldung> {
   const { supabase, ich } = await alsBuero();
   // Über den eigenen Zugang geladen: Mitarbeiter fremder Firmen findet
   // die Datenbank gar nicht erst.
@@ -121,9 +102,7 @@ export async function einladen(
   // und verschickt die Einladung. Wurde der Einladungslink schon geöffnet,
   // gilt der Login als bestätigt und Supabase lehnt ab.
   const dienst = createDienstClient();
-  const { data, error } = await dienst.auth.admin.inviteUserByEmail(
-    bestand.email,
-  );
+  const { data, error } = await dienst.auth.admin.inviteUserByEmail(bestand.email);
   if (error) {
     if (error.code !== "email_exists") {
       console.error("Einladung fehlgeschlagen", error);

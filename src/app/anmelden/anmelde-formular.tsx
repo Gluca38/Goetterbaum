@@ -22,12 +22,7 @@ export function AnmeldeFormular() {
         <label>
           {texte.anmelden.passwort}
           <br />
-          <input
-            name="passwort"
-            type="password"
-            autoComplete="current-password"
-            required
-          />
+          <input name="passwort" type="password" autoComplete="current-password" required />
         </label>
       </p>
       {zustand.fehler && <p role="alert">{zustand.fehler}</p>}

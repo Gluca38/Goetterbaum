@@ -465,7 +465,12 @@ test("Tagesgrenzen stimmen beim Wechsel auf die Sommerzeit", () => {
   ];
   expect(
     tageImNachweis(
-      eingabe({ kunde: minutengenau, ersterMonat: "2026-03", objekte: [stundenObjekt], zeiteintraege }),
+      eingabe({
+        kunde: minutengenau,
+        ersterMonat: "2026-03",
+        objekte: [stundenObjekt],
+        zeiteintraege,
+      }),
     ),
   ).toEqual([
     ["2026-03-28", 30],
@@ -484,7 +489,12 @@ test("Tagesgrenzen stimmen beim Wechsel auf die Winterzeit", () => {
   ];
   expect(
     tageImNachweis(
-      eingabe({ kunde: minutengenau, ersterMonat: "2026-10", objekte: [stundenObjekt], zeiteintraege }),
+      eingabe({
+        kunde: minutengenau,
+        ersterMonat: "2026-10",
+        objekte: [stundenObjekt],
+        zeiteintraege,
+      }),
     ),
   ).toEqual([
     ["2026-10-24", 60],

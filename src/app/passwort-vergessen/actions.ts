@@ -11,7 +11,9 @@ export async function linkAnfordern(
   _vorher: VergessenZustand,
   formData: FormData,
 ): Promise<VergessenZustand> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   if (!email) return { verschickt: false };
 
   const supabase = await createClient();
