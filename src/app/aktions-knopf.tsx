@@ -1,9 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import type { Rueckmeldung } from "./actions";
-
-const START: Rueckmeldung = { fehler: null, meldung: null };
+import { START, type Rueckmeldung } from "@/lib/rueckmeldung";
 
 // Ein einzelner Knopf, der eine Aktion auslöst und deren Rückmeldung
 // direkt darunter zeigt.

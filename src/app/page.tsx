@@ -32,9 +32,17 @@ async function Begruessung() {
         {texte.start.rolle}: <strong>{texte.rollen[mitarbeiter.rolle]}</strong>
       </p>
       {mitarbeiter.rolle === "buero" && (
-        <p>
-          <Link href="/mitarbeiter">{texte.start.mitarbeiterVerwalten}</Link>
-        </p>
+        <>
+          <p>
+            <Link href="/mitarbeiter">{texte.start.mitarbeiterVerwalten}</Link>
+          </p>
+          <p>
+            <Link href="/kunden">{texte.start.kundenVerwalten}</Link>
+          </p>
+          <p>
+            <Link href="/objekte">{texte.start.objekteVerwalten}</Link>
+          </p>
+        </>
       )}
       <form action={abmelden}>
         <button type="submit">{texte.start.abmelden}</button>

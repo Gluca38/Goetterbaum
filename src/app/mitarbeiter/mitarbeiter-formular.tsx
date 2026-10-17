@@ -3,10 +3,8 @@
 import { useActionState } from "react";
 import type { MitarbeiterDaten } from "@/lib/mitarbeiter/eingabe";
 import { ROLLEN } from "@/lib/rollen";
+import { START, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { texte } from "@/texte";
-import type { Rueckmeldung } from "./actions";
-
-const START: Rueckmeldung = { fehler: null, meldung: null };
 
 // Formular für Name, E-Mail und Rolle, zum Anlegen wie zum Bearbeiten.
 export function MitarbeiterFormular({
