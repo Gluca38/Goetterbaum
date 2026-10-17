@@ -90,17 +90,23 @@ export async function fahrtStarten(fuer: string): Promise<Rueckmeldung> {
 
 // Stoppt den laufenden Zeiteintrag. Das Ende setzt die Datenbank mit ihrer
 // eigenen Uhr; der mitgeschickte Wert ist nur nötig, damit sich überhaupt
-// etwas ändert.
+// etwas ändert. Ein unvollständiger Eintrag wird nicht gestoppt: Bei ihm
+// übernähme die Datenbank den mitgeschickten Wert als nachgetragenes Ende,
+// also mehr als 12 Stunden. Das passiert, wenn die Seite vor Ablauf der 12
+// Stunden geladen und erst danach Stopp gedrückt wurde.
 export async function zeiteintragStoppen(fuer: string): Promise<Rueckmeldung> {
   const erfasser = await alsErfasser(fuer);
   if (erfasser.fehler) return erfasser.fehler;
   const { supabase } = erfasser;
 
+  const jetzt = Date.now();
+  const unvollstaendigVor = jetzt - UNVOLLSTAENDIG_NACH_STUNDEN * 60 * 60 * 1000;
   const { data, error } = await supabase
     .from("zeiteintrag")
-    .update({ ende: new Date().toISOString() })
+    .update({ ende: new Date(jetzt).toISOString() })
     .eq("mitarbeiter_id", fuer)
     .is("ende", null)
+    .gte("beginn", new Date(unvollstaendigVor).toISOString())
     .select("id");
   if (error) {
     console.error("Zeiteintrag stoppen fehlgeschlagen", error);
@@ -108,8 +114,9 @@ export async function zeiteintragStoppen(fuer: string): Promise<Rueckmeldung> {
   }
 
   refresh();
-  // Schon woanders gestoppt (z. B. auf einem zweiten Gerät).
-  if (data.length === 0) return FEHLER(texte.erfassung.fehlerLaeuftNichts);
+  // Schon woanders gestoppt (z. B. auf einem zweiten Gerät) oder
+  // inzwischen unvollständig; die neu geladene Seite zeigt, was gilt.
+  if (data.length === 0) return FEHLER(texte.erfassung.fehlerLaeuftNichtsOderUnvollstaendig);
   return OK();
 }
 
@@ -218,7 +225,7 @@ export async function endeNachtragen(
     .update({ ende: eingabe.ende })
     .eq("id", id)
     .is("ende", null)
-    .select("id");
+    .select("nachtrag");
   if (error) {
     console.error("Ende nachtragen fehlgeschlagen", error);
     return FEHLER(texte.nachtrag.fehlerNichtGespeichert);
@@ -227,5 +234,9 @@ export async function endeNachtragen(
   refresh();
   // Inzwischen woanders beendet.
   if (data.length === 0) return FEHLER(texte.nachtrag.schonBeendet);
+  // Nach der Uhr der Datenbank lief er noch keine 12 Stunden (die Uhren
+  // weichen knapp an der Grenze ab): Sie hat ihn wie bei einem Stopp mit
+  // ihrer eigenen Uhr beendet.
+  if (!data[0].nachtrag) return FEHLER(texte.nachtrag.mitJetztBeendet(UNVOLLSTAENDIG_NACH_STUNDEN));
   return OK(texte.nachtrag.gespeichert);
 }

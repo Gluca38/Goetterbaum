@@ -105,6 +105,31 @@ test.describe("am Handy", () => {
     await expect(page.getByRole("button", { name: "Stopp" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Unvollständig" })).toHaveCount(0);
   });
+
+  test("Wird der Eintrag unvollständig, während die Seite offen ist, speichert der Stopp nichts", async ({
+    page,
+  }) => {
+    const { firmaA } = testdaten();
+    const ich = await legeEigenenZugangAn(firmaA.id);
+    const { id } = await laufenderEintrag(firmaA.id, ich, vorStunden(11.5));
+
+    await meldeAn(page, ich);
+    await erwarteAngemeldet(page, ich.name);
+    await expect(page.getByRole("button", { name: "Stopp" })).toBeVisible();
+    // Während die Seite offen ist, vergehen die 12 Stunden.
+    const { error } = await dienstZugang()!
+      .from("zeiteintrag")
+      .update({ beginn: new Date(vorStunden(13)).toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+
+    // Die Seite lädt neu und zeigt statt des Stopps das Formular für das
+    // richtige Ende.
+    await page.getByRole("button", { name: "Stopp" }).click();
+    await expect(page.getByRole("heading", { name: "Unvollständig" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Stopp" })).toHaveCount(0);
+    expect(await gespeicherterEintrag(id)).toMatchObject({ ende: null, nachtrag: false });
+  });
 });
 
 test("Das Büro sieht alle unvollständigen Einträge auf der Prüfliste und trägt das Ende nach", async ({
@@ -142,6 +167,7 @@ test("Das Büro sieht alle unvollständigen Einträge auf der Prüfliste und tr�
   await page.getByRole("button", { name: "Ende speichern" }).click();
 
   await expect(page).toHaveURL(/\/unvollstaendige-eintraege$/);
+  await expect(page.getByRole("heading", { name: "Unvollständige Zeiteinträge" })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: vergesslich.name })).toHaveCount(0);
   const gespeichert = await gespeicherterEintrag(id);
   expect(gespeichert.nachtrag).toBe(true);

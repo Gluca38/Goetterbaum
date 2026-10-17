@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { schnittstelleAls, testdaten } from "./testumgebung/hilfen";
 import {
@@ -6,6 +7,7 @@ import {
   legeKundeMitObjektAn,
   legeTaetigkeitAn,
   legeZeiteintragAn,
+  legeZugangAn,
 } from "./testumgebung/testdaten";
 
 // Diese Tests gehen an der App vorbei direkt auf die öffentliche
@@ -117,6 +119,31 @@ test("Vorarbeiter tragen das Ende für andere nach, normale Mitarbeiter nicht", 
     .eq("id", id)
     .select("id");
   expect(alsVorarbeiter.data).toHaveLength(1);
+  const gespeichert = await gespeicherterEintrag(id);
+  expect(gespeichert.nachtrag).toBe(true);
+  expect(Date.parse(gespeichert.ende!)).toBe(Date.parse(ende));
+});
+
+test("Das Büro trägt das Ende auch für deaktivierte Mitarbeiter nach", async () => {
+  const { firmaA } = testdaten();
+  const buero = await legeEigenenZugangAn(firmaA.id, "buero");
+  const ehemaliger = await legeZugangAn(dienstZugang()!, firmaA.id, {
+    name: `Ehemaliger ${randomUUID().slice(0, 8)}`,
+    rolle: "mitarbeiter",
+    aktiv: false,
+  });
+  const id = await laufenderEintrag(firmaA.id, ehemaliger.id, vor(40));
+  const ende = vor(31);
+
+  const { data, error } = await (
+    await schnittstelleAls(buero)
+  )
+    .from("zeiteintrag")
+    .update({ ende })
+    .eq("id", id)
+    .select("id");
+  expect(error).toBeNull();
+  expect(data).toHaveLength(1);
   const gespeichert = await gespeicherterEintrag(id);
   expect(gespeichert.nachtrag).toBe(true);
   expect(Date.parse(gespeichert.ende!)).toBe(Date.parse(ende));

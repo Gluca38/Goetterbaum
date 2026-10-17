@@ -237,7 +237,8 @@ export const texte = {
     fehlerObjekt: "Bitte wähle ein Objekt.",
     fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",
     fehlerLaeuftSchon: "Es läuft schon ein Zeiteintrag. Stoppe ihn, bevor du einen neuen startest.",
-    fehlerLaeuftNichts: "Es läuft kein Zeiteintrag mehr.",
+    fehlerLaeuftNichtsOderUnvollstaendig:
+      "Es läuft kein Zeiteintrag mehr, oder er läuft schon so lange, dass du das richtige Ende nachtragen musst.",
     fehlerNichtZurAuswahl:
       "Dieses Objekt oder diese Tätigkeit steht nicht mehr zur Auswahl. Bitte lade die Seite neu.",
     fehlerAbgemeldet: "Du bist nicht mehr angemeldet. Bitte melde dich neu an.",
@@ -284,6 +285,8 @@ export const texte = {
     endeNachtragen: "Ende nachtragen",
     endeSpeichern: "Ende speichern",
     schonBeendet: "Dieser Zeiteintrag ist schon beendet.",
+    mitJetztBeendet: (stunden: number) =>
+      `Der Zeiteintrag wurde mit der aktuellen Uhrzeit beendet, weil er noch keine ${stunden} Stunden lief. Bitte korrigiere das Ende über „Ändern“.`,
     nichtUnvollstaendig: (stunden: number) =>
       `Dieser Zeiteintrag läuft noch keine ${stunden} Stunden. Stoppe ihn, wenn die Arbeit zu Ende ist.`,
     fehlerUhrzeitEnde: "Bitte gib das Ende als Uhrzeit ein, z. B. 16:30.",

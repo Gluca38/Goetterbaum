@@ -150,12 +150,18 @@ export async function ladeUnvollstaendigeEintraege(
 }
 
 // Fürs Büro: ein Zeiteintrag der Firma mit seinem aufbereiteten
-// Änderungsprotokoll, oder null, wenn es ihn nicht gibt.
+// Änderungsprotokoll und dem Zeitpunkt, zu dem geladen wurde, oder null,
+// wenn es ihn nicht gibt.
 export async function ladeZeiteintragMitProtokoll(
   supabase: SupabaseClient,
   id: string,
-): Promise<{ eintrag: ZeiteintragDerFirma; protokoll: AngezeigteProtokollZeile[] } | null> {
+): Promise<{
+  eintrag: ZeiteintragDerFirma;
+  protokoll: AngezeigteProtokollZeile[];
+  jetzt: number;
+} | null> {
   if (!istId(id)) return null;
+  const jetzt = Date.now();
   const [eintrag, protokoll] = await Promise.all([
     supabase
       .rpc("zeiteintraege_der_firma", { ab: "-infinity" })
@@ -185,6 +191,7 @@ export async function ladeZeiteintragMitProtokoll(
 
   return {
     eintrag: eintrag.data,
+    jetzt,
     protokoll: protokollAnzeigen(zeilen, {
       objekte: new Map(objekte.data.map((o) => [o.id, o.bezeichnung])),
       taetigkeiten: new Map(taetigkeiten.data.map((t) => [t.id, t.name])),

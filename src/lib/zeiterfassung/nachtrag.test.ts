@@ -196,3 +196,14 @@ test("Das nachgetragene Ende liegt nach dem Beginn und nicht in der Zukunft", ()
   expect(ende("2026-10-16", "14:00")).toEqual({ ok: true, ende: "2026-10-16T12:00:00.000Z" });
   expect(ende("2026-10-16", "14:01")).toEqual(fehlerZukunft);
 });
+
+test("Ein Ende über die Zeitumstellung hinweg gilt in der dann gültigen Berliner Zeit", () => {
+  // Am 25.10.2026 springt die Uhr um 03:00 Sommerzeit auf 02:00 zurück.
+  // Begonnen am Sa., 24.10., 20:15:09 Sommerzeit.
+  const beginn = "2026-10-24T18:15:09.000Z";
+  const jetzt = Date.parse("2026-10-25T12:00:00Z");
+  const ende = (bis: string) =>
+    pruefeEndeEingabe(formular({ datum: "2026-10-25", bis }), jetzt, beginn);
+  expect(ende("01:30")).toEqual({ ok: true, ende: "2026-10-24T23:30:00.000Z" });
+  expect(ende("03:30")).toEqual({ ok: true, ende: "2026-10-25T02:30:00.000Z" });
+});
