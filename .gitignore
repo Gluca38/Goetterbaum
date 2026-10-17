@@ -195,3 +195,7 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Claude Code: lokale Arbeitskopien und persönliche Einstellungen
+/.claude/worktrees/
+/.claude/settings.local.json
