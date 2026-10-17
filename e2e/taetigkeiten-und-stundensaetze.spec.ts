@@ -111,7 +111,9 @@ test("Büro legt beim Kunden einen abweichenden Stundensatz fest, sieht, welcher
   await expect(page.getByRole("status")).toHaveText("Stundensatz festgelegt.");
   await expect(zeile).toContainText("28,50 € (abweichend)");
 
-  // Erneut festlegen ersetzt den bisherigen Satz.
+  // Erneut festlegen ersetzt den bisherigen Satz. Nach dem Festlegen ist
+  // das Formular wieder leer.
+  await auswahl(page, "Tätigkeit").selectOption({ label: name });
   await feld(page, "Abweichender Stundensatz pro Stunde in Euro").fill("27");
   await page.getByRole("button", { name: "Festlegen" }).click();
   await expect(zeile).toContainText("27,00 € (abweichend)");

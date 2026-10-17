@@ -187,7 +187,6 @@ export const texte = {
     name: "Name",
     sparte: "Sparte",
     standardStundensatz: "Standard-Stundensatz pro Stunde in Euro",
-    proStunde: (betrag: string) => `${betrag} pro Stunde`,
     archiviertHinweis:
       "Diese Tätigkeit ist archiviert. Sie erscheint in keiner Auswahlliste mehr; ihre Daten bleiben erhalten.",
     archivierenHinweis:
@@ -195,7 +194,6 @@ export const texte = {
     fehlerName: "Bitte gib einen Namen ein.",
     fehlerNameVergeben: "Eine Tätigkeit mit diesem Namen gibt es schon.",
     fehlerSparte: "Bitte wähle eine Sparte.",
-    fehlerStundensatz: "Der Stundensatz ist kein gültiger Betrag. Beispiel: 32,50",
   },
   stundensaetze: {
     titel: "Stundensätze",
@@ -218,6 +216,9 @@ export const texte = {
     entfernen: "Entfernen",
     entfernenLaeuft: "Wird entfernt …",
     fehlerTaetigkeit: "Bitte wähle eine Tätigkeit.",
+    fehlerTaetigkeitArchiviert:
+      "Diese Tätigkeit ist archiviert. Aktiviere sie zuerst wieder.",
+    fehlerStundensatz: "Der Stundensatz ist kein gültiger Betrag. Beispiel: 32,50",
   },
   stammdaten: {
     keineBerechtigung: "Kunden und Objekte verwalten darf nur das Büro.",

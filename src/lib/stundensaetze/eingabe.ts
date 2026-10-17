@@ -30,7 +30,7 @@ export function pruefeKundenStundensatzEingabe(formData: FormData): EingabeErgeb
   }
   const stundensatz_cent = stundensatzInCent(String(formData.get("stundensatz") ?? ""));
   if (!stundensatz_cent) {
-    return { ok: false, fehler: texte.taetigkeiten.fehlerStundensatz };
+    return { ok: false, fehler: texte.stundensaetze.fehlerStundensatz };
   }
   return { ok: true, daten: { taetigkeit_id, stundensatz_cent } };
 }

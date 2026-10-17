@@ -25,7 +25,7 @@ export function pruefeTaetigkeitsEingabe(formData: FormData): EingabeErgebnis {
   if (!istSparte(sparte)) return { ok: false, fehler: meldungen.fehlerSparte };
   const standard_stundensatz_cent = stundensatzInCent(feld("standard_stundensatz"));
   if (!standard_stundensatz_cent) {
-    return { ok: false, fehler: meldungen.fehlerStundensatz };
+    return { ok: false, fehler: texte.stundensaetze.fehlerStundensatz };
   }
 
   return { ok: true, daten: { name, sparte, standard_stundensatz_cent } };
