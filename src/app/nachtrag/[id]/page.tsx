@@ -37,14 +37,22 @@ async function Aendern({ id: idVersprechen }: { id: Promise<string> }) {
       <>
         <p>{eintrag ? texte.nachtrag.laeuftNoch : texte.nachtrag.nichtGefunden}</p>
         <p>
-          <Link href={eintrag ? erfassungVon(ich, eintrag.mitarbeiter_id) : "/"}>
+          <Link
+            href={
+              eintrag && eintrag.mitarbeiter_id !== ich.id
+                ? `/fuer-andere/${eintrag.mitarbeiter_id}`
+                : "/"
+            }
+          >
             {texte.nachtrag.zurueck}
           </Link>
         </p>
       </>
     );
   }
-  const erfasst = await erfassterMitarbeiter(supabase, ich, eintrag.mitarbeiter_id);
+  const erfasst = await erfassterMitarbeiter(supabase, ich, eintrag.mitarbeiter_id, {
+    zumAendern: true,
+  });
   if ("hinweis" in erfasst) return erfasst.hinweis;
   const { mitarbeiter } = erfasst;
 
@@ -57,7 +65,7 @@ async function Aendern({ id: idVersprechen }: { id: Promise<string> }) {
         // Seite samt Formularzustand vorrätig.
         key={JSON.stringify(eintrag)}
         aktion={zeiteintragAendern.bind(null, eintrag.id)}
-        zurueck={erfassungVon(ich, mitarbeiter.id)}
+        zurueck={erfassungVon(ich, mitarbeiter)}
         {...await ladeAuswahl(supabase)}
         vorgabe={{
           art: eintrag.art,

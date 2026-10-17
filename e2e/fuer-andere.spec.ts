@@ -14,6 +14,7 @@ import {
   legeEigenenZugangAn,
   legeKundeMitObjektAn,
   legeTaetigkeitAn,
+  legeZeiteintragAn,
   legeZugangAn,
   type TestZugang,
 } from "./testumgebung/testdaten";
@@ -176,6 +177,41 @@ test("Das Büro sieht bei jedem Eintrag, wer ihn angelegt hat, und ändert fremd
   await expect(zeilen.filter({ hasText: "Angelegt" })).toContainText(vorarbeiter.name);
   await expect(zeilen.filter({ hasText: "Geändert" })).toContainText(buero.name);
   await expect(zeilen.filter({ hasText: "Geändert" })).toContainText("Ende:");
+});
+
+test("Das Büro ändert auch Einträge deaktivierter Mitarbeiter und kommt zur Übersicht zurück", async ({
+  page,
+}) => {
+  const { firmaA } = testdaten();
+  const dienst = dienstZugang()!;
+  const buero = await legeEigenenZugangAn(firmaA.id, "buero");
+  const ehemaliger = await legeZugangAn(dienst, firmaA.id, {
+    name: `Ehemaliger ${randomUUID().slice(0, 8)}`,
+    rolle: "mitarbeiter",
+    aktiv: false,
+  });
+  await legeZeiteintragAn(dienst, {
+    firmaId: firmaA.id,
+    mitarbeiterId: ehemaliger.id,
+    beginn: gesternUm("13:00"),
+    ende: gesternUm("14:00"),
+  });
+
+  await meldeAn(page, buero);
+  await erwarteAngemeldet(page, buero.name);
+  await page.goto("/zeiteintraege");
+  await page
+    .getByRole("row")
+    .filter({ hasText: ehemaliger.name })
+    .getByRole("link", { name: "Ändern" })
+    .click();
+  await expect(page.getByText(`Für ${ehemaliger.name}`, { exact: true })).toBeVisible();
+  await feld(page, "Bis").fill("14:15");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page).toHaveURL(/\/zeiteintraege$/);
+  const zeile = page.getByRole("row").filter({ hasText: ehemaliger.name });
+  await expect(zeile).toContainText("13:00–14:15");
+  await expect(zeile).toContainText("Nachtrag");
 });
 
 test("Ein normaler Mitarbeiter kann nicht für andere erfassen", async ({ page }) => {

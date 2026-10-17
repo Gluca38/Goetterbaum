@@ -66,19 +66,18 @@ export async function ladeAndereMitarbeiter(
   return data;
 }
 
-// Ein aktiver Mitarbeiter, oder null, wenn es ihn nicht gibt, er
-// deaktiviert ist oder der angemeldete Nutzer ihn nicht sehen darf.
-export async function ladeAktivenMitarbeiter(
+// Ein Mitarbeiter, oder null, wenn es ihn nicht gibt, der angemeldete
+// Nutzer ihn nicht sehen darf oder er deaktiviert ist (außer mit
+// auchDeaktivierte).
+export async function ladeMitarbeiterZumErfassen(
   supabase: SupabaseClient,
   id: string,
-): Promise<MitarbeiterZumErfassen | null> {
+  auchDeaktivierte: boolean,
+): Promise<(MitarbeiterZumErfassen & { aktiv: boolean }) | null> {
   if (!istId(id)) return null;
-  const { data, error } = await supabase
-    .from("mitarbeiter")
-    .select("id, name")
-    .eq("id", id)
-    .eq("aktiv", true)
-    .maybeSingle<MitarbeiterZumErfassen>();
+  let abfrage = supabase.from("mitarbeiter").select("id, name, aktiv").eq("id", id);
+  if (!auchDeaktivierte) abfrage = abfrage.eq("aktiv", true);
+  const { data, error } = await abfrage.maybeSingle<MitarbeiterZumErfassen & { aktiv: boolean }>();
   if (error) throw error;
   return data;
 }

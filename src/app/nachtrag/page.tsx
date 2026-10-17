@@ -48,7 +48,7 @@ async function Formular({
       {mitarbeiter.id !== ich.id && <p>{texte.fuerAndere.fuer(mitarbeiter.name)}</p>}
       <NachtragFormular
         aktion={zeiteintragNachtragen.bind(null, mitarbeiter.id)}
-        zurueck={erfassungVon(ich, mitarbeiter.id)}
+        zurueck={erfassungVon(ich, mitarbeiter)}
         {...await ladeAuswahl(supabase)}
         vorgabe={{
           art: "taetigkeit",
