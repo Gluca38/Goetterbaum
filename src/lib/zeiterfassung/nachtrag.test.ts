@@ -104,3 +104,35 @@ test("Ein Nachtrag darf nicht in der Zukunft enden", () => {
     pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, datum: "2026-10-17" }), JETZT),
   ).toEqual(fehlerZukunft);
 });
+
+test("Beim Ändern bleibt eine unveränderte Uhrzeit sekundengenau wie gespeichert", () => {
+  // Live erfasst von 07:30:27 bis 09:45:51 (Berliner Zeit).
+  const bisher = { beginn: "2026-10-16T05:30:27.000Z", ende: "2026-10-16T07:45:51.000Z" };
+
+  expect(pruefeNachtragEingabe(formular(TAETIGKEIT_AM_MORGEN), JETZT, bisher)).toMatchObject({
+    ok: true,
+    daten: bisher,
+  });
+  expect(
+    pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, bis: "10:00" }), JETZT, bisher),
+  ).toMatchObject({
+    ok: true,
+    daten: { beginn: bisher.beginn, ende: "2026-10-16T08:00:00.000Z" },
+  });
+  // An einem anderen Tag gilt die neue Zeit.
+  expect(
+    pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, datum: "2026-10-15" }), JETZT, bisher),
+  ).toMatchObject({
+    ok: true,
+    daten: { beginn: "2026-10-15T05:30:00.000Z", ende: "2026-10-15T07:45:00.000Z" },
+  });
+});
+
+test("Ein Live-Eintrag unter einer Minute lässt sich ändern, solange die Zeiten bleiben", () => {
+  const bisher = { beginn: "2026-10-16T05:30:10.000Z", ende: "2026-10-16T05:30:40.000Z" };
+  const kurz = { ...TAETIGKEIT_AM_MORGEN, von: "07:30", bis: "07:30" };
+  expect(pruefeNachtragEingabe(formular(kurz), JETZT, bisher)).toMatchObject({
+    ok: true,
+    daten: bisher,
+  });
+});

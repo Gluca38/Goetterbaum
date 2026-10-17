@@ -1,11 +1,12 @@
 // Bereitet das Änderungsprotokoll eines Zeiteintrags für das Büro auf:
 // wer, wann, was vorher und was nachher. Zeiten gelten in Berlin.
 import { texte } from "@/texte";
+import { artAlsText, type ZeiteintragArt } from "./anzeige";
 
 // Ein Zeiteintrag, so wie die Datenbank ihn ins Protokoll schreibt (die
 // ganze Zeile). Hier zählen nur diese Angaben.
 type Stand = {
-  art: string;
+  art: ZeiteintragArt;
   objekt_id: string | null;
   taetigkeit_id: string | null;
   beginn: string;
@@ -13,7 +14,7 @@ type Stand = {
   nachtrag: boolean;
 };
 
-// Eine Zeile, wie sie die Datenbank-Funktion zeiteintrag_protokoll
+// Eine Zeile, wie sie die Datenbank-Funktion protokoll_zum_zeiteintrag
 // liefert. Ohne Name stammt die Änderung nicht von einem Nutzer der App,
 // sondern z. B. vom Dienstschlüssel.
 export type ProtokollZeile = {
@@ -65,7 +66,7 @@ function nameAlsText(namen: Map<string, string>, id: string | null): string {
 function felder(stand: Stand, namen: Namen): [string, string][] {
   const t = texte.protokoll;
   return [
-    [t.art, stand.art === "fahrt" ? texte.erfassung.fahrt : texte.erfassung.taetigkeit],
+    [t.art, artAlsText(stand.art)],
     [t.objekt, nameAlsText(namen.objekte, stand.objekt_id)],
     [t.taetigkeit, nameAlsText(namen.taetigkeiten, stand.taetigkeit_id)],
     [t.beginn, zeitAlsText(stand.beginn)],

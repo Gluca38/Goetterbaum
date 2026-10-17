@@ -1,12 +1,21 @@
 // Bereitet die eigenen Zeiteinträge für die Anzeige am Handy auf. Tage
 // und Uhrzeiten gelten in Berlin, egal wo der Server läuft.
 import { berlinerDatum, berlinerMitternacht } from "@/lib/berliner-zeit";
+import { texte } from "@/texte";
+
+// Die Arten eines Zeiteintrags, wie in der Datenbank (Typ zeiteintrag_art).
+export type ZeiteintragArt = "taetigkeit" | "fahrt";
+
+// Die Art in Worten.
+export function artAlsText(art: ZeiteintragArt): string {
+  return art === "fahrt" ? texte.erfassung.fahrt : texte.erfassung.taetigkeit;
+}
 
 // Ein eigener Zeiteintrag, wie ihn die Datenbank-Funktion
 // meine_zeiteintraege liefert.
 export type MeinZeiteintrag = {
   id: string;
-  art: "taetigkeit" | "fahrt";
+  art: ZeiteintragArt;
   // Zeitpunkte als ISO-Text mit Zeitzone; ende ist leer, solange er läuft.
   beginn: string;
   ende: string | null;
@@ -95,4 +104,12 @@ export function tagUndZeit(beginn: string, ende: string | null, laeuft: string):
   const von = Date.parse(beginn);
   const bis = ende === null ? laeuft : uhrzeit.format(Date.parse(ende));
   return `${tagesTitel.format(von)}, ${uhrzeit.format(von)}–${bis}`;
+}
+
+// Was und wo in einer Zeile: die Fahrt oder Objekt und Tätigkeit.
+export function wasUndWo(
+  eintrag: Pick<MeinZeiteintrag, "art" | "objekt_bezeichnung" | "taetigkeit_name">,
+): string {
+  if (eintrag.art === "fahrt") return texte.erfassung.fahrt;
+  return `${eintrag.objekt_bezeichnung} · ${eintrag.taetigkeit_name}`;
 }

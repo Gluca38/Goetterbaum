@@ -124,7 +124,8 @@ test("Ein geänderter Live-Eintrag wird zum Nachtrag, und das Büro sieht das Pr
     mitarbeiterId: ich.id,
     objektId: objekt.objektId,
     taetigkeitId: taetigkeit.taetigkeitId,
-    beginn: gesternUm("08:00"),
+    // Live erfasst, also mit Sekunden.
+    beginn: new Date(Date.parse(gesternUm("08:00")) + 27_000).toISOString(),
     ende: gesternUm("10:00"),
   });
   await page.reload();

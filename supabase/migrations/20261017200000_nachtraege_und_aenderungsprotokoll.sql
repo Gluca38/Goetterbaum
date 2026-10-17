@@ -15,7 +15,9 @@
 -- Jedes Anlegen und Ändern eines Zeiteintrags schreibt die Datenbank ins
 -- Änderungsprotokoll (wer, wann, vorher, nachher). Das Protokoll kann kein
 -- Nutzer schreiben, ändern oder löschen, auch nicht mit dem
--- Dienstschlüssel. Lesen darf es das Büro der eigenen Firma.
+-- Dienstschlüssel. Es verschwindet nur mit seinem Zeiteintrag, also beim
+-- Löschen einer ganzen Firma (Aufräumen nach Tests). Lesen darf es das
+-- Büro der eigenen Firma.
 --
 -- Zugriffsrechte, die sich ändern:
 -- * Mitarbeiter ändern alle ihre eigenen Zeiteinträge (bisher nur das Ende
@@ -24,7 +26,8 @@
 --   eigenen). Ändern darf es fremde Einträge erst mit #12.
 --
 -- Der Dienstschlüssel (Test-Setup) setzt Zeiten weiterhin frei; die
--- Regeln zu Live-Start und Nachtrag gelten für Nutzer der App.
+-- Regeln zu Live-Start und Nachtrag gelten für alle Anfragen angemeldeter
+-- Nutzer, auch über künftige Datenbank-Funktionen.
 
 begin;
 
@@ -69,14 +72,20 @@ create policy "Büro sieht alle Zeiteinträge der eigenen Firma"
 -- Datenbank. Mit Ende angelegt ist ein Nachtrag. Beim Ändern wird ein
 -- Eintrag zum Nachtrag, sobald sich Beginn oder Ende ändern; den Stopp
 -- eines laufenden Eintrags (Ende = jetzt, siehe zeiteintrag_ende_jetzt)
--- zählt nicht dazu. Ein beendeter Eintrag läuft nie wieder.
+-- zählt nicht dazu. Ein beendeter Eintrag läuft nie wieder, und ein
+-- Nachtrag hat immer eine Dauer.
+--
+-- Ob die Regeln gelten, entscheidet die Rolle aus der Anmeldung (nicht
+-- current_user), damit sie auch in künftigen "security definer"-Funktionen
+-- greifen. Ohne Anmeldung (Migrationen) bzw. mit dem Dienstschlüssel
+-- gelten sie nicht.
 create function privat.zeiteintrag_nachtrag_erkennen()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
-  if current_user <> 'authenticated' then
+  if auth.role() is distinct from 'authenticated' then
     return new;
   end if;
 
@@ -99,6 +108,10 @@ begin
 
   if new.beginn > now() or new.ende > now() then
     raise exception 'Ein Zeiteintrag kann nicht in der Zukunft liegen.'
+      using errcode = 'check_violation';
+  end if;
+  if new.nachtrag and new.ende <= new.beginn then
+    raise exception 'Ein Nachtrag endet nach seinem Beginn.'
       using errcode = 'check_violation';
   end if;
   return new;

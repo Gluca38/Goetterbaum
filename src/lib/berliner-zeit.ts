@@ -76,3 +76,8 @@ export function aufBerlinerTageVerteilt(
   }
   return stuecke;
 }
+
+// Der heutige Tag in Berlin als "JJJJ-MM-TT".
+export function heuteInBerlin(): string {
+  return berlinerDatum(Date.now());
+}

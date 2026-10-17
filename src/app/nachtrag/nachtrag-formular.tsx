@@ -7,13 +7,14 @@ import { Fehlermeldung, useErfassungsAktion } from "@/app/erfassung/erfassungs-a
 import styles from "@/app/erfassung/erfassung.module.css";
 import { ObjektAuswahl, TaetigkeitAuswahl } from "@/app/erfassung/objekt-auswahl";
 import type { Rueckmeldung } from "@/lib/rueckmeldung";
+import { artAlsText, type ZeiteintragArt } from "@/lib/zeiterfassung/anzeige";
 import type { ObjektZurAuswahl, TaetigkeitZurAuswahl } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 
 // Was im Formular schon steht: beim Ändern der bisherige Eintrag, beim
 // Nachtragen nur das heutige Datum. Datum und Uhrzeiten in Berlin.
 export type NachtragVorgabe = {
-  art: "taetigkeit" | "fahrt";
+  art: ZeiteintragArt;
   objekt_id: string;
   taetigkeit_id: string;
   datum: string;
@@ -72,7 +73,7 @@ export function NachtragFormular({
               checked={art === wert}
               onChange={() => setArt(wert)}
             />
-            {wert === "fahrt" ? texte.erfassung.fahrt : texte.erfassung.taetigkeit}
+            {artAlsText(wert)}
           </label>
         ))}
       </fieldset>

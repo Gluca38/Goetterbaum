@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istId } from "@/lib/id";
 import type { Sparte } from "@/lib/sparte";
-import { angezeigtAb, type MeinZeiteintrag } from "./anzeige";
+import { angezeigtAb, type MeinZeiteintrag, type ZeiteintragArt } from "./anzeige";
 import {
   protokollAnzeigen,
   type AngezeigteProtokollZeile,
@@ -50,7 +50,7 @@ export async function ladeMeineZeiteintraege(
 // wenn es ihn nicht gibt oder er jemand anderem gehört.
 export type ZeiteintragZumAendern = {
   id: string;
-  art: "taetigkeit" | "fahrt";
+  art: ZeiteintragArt;
   objekt_id: string | null;
   taetigkeit_id: string | null;
   beginn: string;

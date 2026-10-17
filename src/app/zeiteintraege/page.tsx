@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { NurFuerBuero } from "@/app/nur-fuer-buero";
 import { createClient } from "@/lib/supabase/server";
-import { ANGEZEIGTE_TAGE, tagUndZeit } from "@/lib/zeiterfassung/anzeige";
+import { ANGEZEIGTE_TAGE, tagUndZeit, wasUndWo } from "@/lib/zeiterfassung/anzeige";
 import { ladeZeiteintraegeDerFirma } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 import styles from "../page.module.css";
@@ -50,9 +50,7 @@ async function Liste() {
                 <td>{e.mitarbeiter_name}</td>
                 <td>{tagUndZeit(e.beginn, e.ende, t.laeuft)}</td>
                 <td>
-                  {e.art === "fahrt"
-                    ? texte.erfassung.fahrt
-                    : `${e.objekt_bezeichnung} · ${e.taetigkeit_name}`}
+                  {wasUndWo(e)}
                 </td>
                 <td>{e.nachtrag ? texte.nachtrag.markierung : ""}</td>
                 <td>

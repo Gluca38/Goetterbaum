@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { NurFuerBuero } from "@/app/nur-fuer-buero";
 import { createClient } from "@/lib/supabase/server";
-import { tagUndZeit } from "@/lib/zeiterfassung/anzeige";
+import { tagUndZeit, wasUndWo } from "@/lib/zeiterfassung/anzeige";
 import { ladeZeiteintragMitProtokoll } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 import styles from "../../page.module.css";
@@ -44,9 +44,7 @@ async function Protokoll({ id: idVersprechen }: { id: Promise<string> }) {
         {eintrag.mitarbeiter_name} · {tagUndZeit(eintrag.beginn, eintrag.ende, t.laeuft)}
       </h2>
       <p>
-        {eintrag.art === "fahrt"
-          ? texte.erfassung.fahrt
-          : `${eintrag.objekt_bezeichnung} · ${eintrag.taetigkeit_name}`}
+        {wasUndWo(eintrag)}
         {eintrag.nachtrag && ` · ${texte.nachtrag.markierung}`}
       </p>
       {protokoll.length === 0 ? (

@@ -3,11 +3,11 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { refresh } from "next/cache";
 import { angemeldeterMitarbeiter } from "@/lib/angemeldeter-mitarbeiter";
-import { istId } from "@/lib/id";
 import { FEHLER, OK, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { createClient } from "@/lib/supabase/server";
 import { pruefeStartEingabe } from "@/lib/zeiterfassung/eingabe";
 import { pruefeNachtragEingabe } from "@/lib/zeiterfassung/nachtrag";
+import { ladeMeinenZeiteintrag } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 
 // Fehlercodes der Datenbank (siehe Migration zum Zeiteintrag): Es läuft
@@ -139,9 +139,13 @@ export async function zeiteintragAendern(
 ): Promise<Rueckmeldung> {
   const { supabase, ich } = await alsErfasser();
   if (!ich) return FEHLER(texte.erfassung.fehlerAbgemeldet);
-  if (!istId(id)) return FEHLER(texte.nachtrag.nichtGefunden);
+  const bisher = await ladeMeinenZeiteintrag(supabase, ich.id, id);
+  if (!bisher || bisher.ende === null) return FEHLER(texte.nachtrag.nichtGefunden);
 
-  const eingabe = pruefeNachtragEingabe(formData, Date.now());
+  const eingabe = pruefeNachtragEingabe(formData, Date.now(), {
+    beginn: bisher.beginn,
+    ende: bisher.ende,
+  });
   if (!eingabe.ok) return FEHLER(eingabe.fehler);
 
   const { data, error } = await supabase

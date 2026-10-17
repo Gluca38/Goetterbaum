@@ -4,6 +4,7 @@ import {
   ANGEZEIGTE_TAGE,
   laeuftSeit,
   nachTagen,
+  wasUndWo,
   type MeinZeiteintrag,
 } from "@/lib/zeiterfassung/anzeige";
 import { ladeAuswahl, ladeMeineZeiteintraege } from "@/lib/zeiterfassung/verwaltung";
@@ -29,11 +30,6 @@ export async function Erfassung() {
       <MeineEintraege eintraege={eintraege} />
     </section>
   );
-}
-
-function wasUndWo(eintrag: MeinZeiteintrag) {
-  if (eintrag.art === "fahrt") return texte.erfassung.fahrt;
-  return `${eintrag.objekt_bezeichnung} · ${eintrag.taetigkeit_name}`;
 }
 
 function Laufend({ eintrag, jetzt }: { eintrag: MeinZeiteintrag; jetzt: number }) {

@@ -16,7 +16,7 @@ const NAMEN = {
 // So schreibt die Datenbank einen Zeiteintrag ins Protokoll.
 const LIVE = {
   id: "eintrag",
-  art: "taetigkeit",
+  art: "taetigkeit" as const,
   objekt_id: HAUS_A,
   taetigkeit_id: REINIGUNG,
   beginn: "2026-10-16T06:00:00+00:00",
@@ -92,7 +92,7 @@ test("Das Anlegen zeigt alle Angaben, das Ändern nur, was sich geändert hat", 
 });
 
 test("Eine Fahrt hat kein Objekt; Änderungen ohne Benutzer stammen vom System", () => {
-  const fahrt = { ...GESTOPPT, art: "fahrt", objekt_id: null, taetigkeit_id: null };
+  const fahrt = { ...GESTOPPT, art: "fahrt" as const, objekt_id: null, taetigkeit_id: null };
   const [zeile] = protokollAnzeigen(
     [
       {

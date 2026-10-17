@@ -1,11 +1,12 @@
-import { berlinerDatum, berlinerZeitpunkt } from "@/lib/berliner-zeit";
+import { berlinerZeitpunkt } from "@/lib/berliner-zeit";
 import { istId } from "@/lib/id";
 import { texte } from "@/texte";
+import type { ZeiteintragArt } from "./anzeige";
 
 // Die Angaben eines Nachtrags, wie sie in die Tabelle zeiteintrag gehen.
 // Dass er als Nachtrag markiert wird, erledigt die Datenbank selbst.
 export type NachtragDaten = {
-  art: "taetigkeit" | "fahrt";
+  art: ZeiteintragArt;
   objekt_id: string | null;
   taetigkeit_id: string | null;
   // Zeitpunkte als ISO-Text
@@ -23,12 +24,27 @@ function istDatum(wert: string): boolean {
   return new Date(`${wert}T00:00:00Z`).toISOString().slice(0, 10) === wert;
 }
 
+// Der gespeicherte Zeitpunkt, wenn er in derselben Minute liegt wie der
+// eingegebene, sonst der eingegebene.
+function gleicheMinuteWie(eingegeben: number, gespeichert: string | undefined): number {
+  if (gespeichert === undefined) return eingegeben;
+  const genau = Date.parse(gespeichert);
+  return Math.floor(genau / 60_000) * 60_000 === eingegeben ? genau : eingegeben;
+}
+
 // Prüft die Angaben aus dem Nachtrag-Formular: Art, bei einer Tätigkeit
 // Objekt und Tätigkeit, dazu Datum und von–bis in Berliner Zeit an diesem
-// Tag. jetzt ist der aktuelle Zeitpunkt (ms seit 1970). Ob Objekt und
-// Tätigkeit aktiv sind und ob sich der Eintrag mit einem anderen
-// überschneidet, prüft die Datenbank.
-export function pruefeNachtragEingabe(formData: FormData, jetzt: number): NachtragErgebnis {
+// Tag. jetzt ist der aktuelle Zeitpunkt (ms seit 1970). Beim Ändern ist
+// bisher der gespeicherte Eintrag: Bleibt eine Uhrzeit im Formular gleich,
+// bleibt auch der gespeicherte, sekundengenaue Zeitpunkt. Sonst würde jede
+// Änderung eines Live-Eintrags dessen Zeiten auf Minuten kürzen und ihn
+// zum Nachtrag machen. Ob Objekt und Tätigkeit aktiv sind und ob sich der
+// Eintrag mit einem anderen überschneidet, prüft die Datenbank.
+export function pruefeNachtragEingabe(
+  formData: FormData,
+  jetzt: number,
+  bisher?: { beginn: string; ende: string },
+): NachtragErgebnis {
   const feld = (name: string) => String(formData.get(name) ?? "").trim();
   const t = texte.nachtrag;
   const art = feld("art");
@@ -50,8 +66,8 @@ export function pruefeNachtragEingabe(formData: FormData, jetzt: number): Nachtr
   if (!istDatum(datum)) return { ok: false, fehler: t.fehlerDatum };
   if (!UHRZEIT.test(von) || !UHRZEIT.test(bis)) return { ok: false, fehler: t.fehlerUhrzeit };
 
-  const beginn = berlinerZeitpunkt(datum, von);
-  const ende = berlinerZeitpunkt(datum, bis);
+  const beginn = gleicheMinuteWie(berlinerZeitpunkt(datum, von), bisher?.beginn);
+  const ende = gleicheMinuteWie(berlinerZeitpunkt(datum, bis), bisher?.ende);
   if (ende <= beginn) return { ok: false, fehler: t.fehlerEndeVorBeginn };
   if (ende > jetzt) return { ok: false, fehler: t.fehlerZukunft };
 
@@ -65,9 +81,4 @@ export function pruefeNachtragEingabe(formData: FormData, jetzt: number): Nachtr
       ende: new Date(ende).toISOString(),
     },
   };
-}
-
-// Der heutige Tag in Berlin als "JJJJ-MM-TT", als Vorschlag im Formular.
-export function heuteInBerlin(): string {
-  return berlinerDatum(Date.now());
 }

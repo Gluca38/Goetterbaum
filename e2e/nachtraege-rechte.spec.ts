@@ -66,6 +66,11 @@ test("Ein Mitarbeiter trägt eigene Einträge nach und ändert sie; die Datenban
     .from("zeiteintrag")
     .insert({ ...taetigkeit, mitarbeiter_id: ich.id, beginn: vor(1), ende: vor(-1) });
   expect(inZukunft.error?.code).toBe("23514");
+  const zeitpunkt = vor(30);
+  const ohneDauer = await supabase
+    .from("zeiteintrag")
+    .insert({ ...taetigkeit, mitarbeiter_id: ich.id, beginn: zeitpunkt, ende: zeitpunkt });
+  expect(ohneDauer.error?.code).toBe("23514");
 
   const beginn = vor(30);
   const ende = vor(28);
