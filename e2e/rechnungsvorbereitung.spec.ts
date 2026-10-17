@@ -114,9 +114,9 @@ test("Das Büro sieht Pauschale und gerundete Stunden eines Kunden, wird vor Feh
     "500,00 €",
   );
   await expect(zeile(page, kunde.stundenObjekt, kunde.taetigkeit)).toContainText(
-    /2:15 Std\.\s*30,00 €\s*67,50 €/,
+    /2:15 Std\.\s*30,00\s€\s*67,50\s€/,
   );
-  await expect(page.locator("tfoot")).toContainText(/Summe\s*567,50 €/);
+  await expect(page.locator("tfoot")).toContainText(/Summe\s*567,50\s€/);
 
   // Die CSV-Datei hat dieselben Positionen.
   const herunterladen = page.waitForEvent("download");
@@ -143,9 +143,9 @@ test("Das Büro sieht Pauschale und gerundete Stunden eines Kunden, wird vor Feh
     "500,00 €",
   );
   await expect(zeile(page, kunde.stundenObjekt, kunde.taetigkeit)).toContainText(
-    /1:15 Std\.\s*30,00 €\s*37,50 €/,
+    /1:15 Std\.\s*30,00\s€\s*37,50\s€/,
   );
-  await expect(page.locator("tfoot")).toContainText(/Summe\s*537,50 €/);
+  await expect(page.locator("tfoot")).toContainText(/Summe\s*537,50\s€/);
 
   // Mit eigener Rundungsregel des Kunden: minutengenau 106 + 12 Minuten.
   await page.goto(`/kunden/${kunde.kundeId}`);
@@ -157,9 +157,9 @@ test("Das Büro sieht Pauschale und gerundete Stunden eines Kunden, wird vor Feh
   await page.goto(`/rechnungsvorbereitung?kunde=${kunde.kundeId}&monat=2026-03`);
   await expect(page.getByText("Rundungsregel: Minutengenau")).toBeVisible();
   await expect(zeile(page, kunde.stundenObjekt, kunde.taetigkeit)).toContainText(
-    /1:58 Std\.\s*30,00 €\s*59,00 €/,
+    /1:58 Std\.\s*30,00\s€\s*59,00\s€/,
   );
-  await expect(page.locator("tfoot")).toContainText(/Summe\s*559,00 €/);
+  await expect(page.locator("tfoot")).toContainText(/Summe\s*559,00\s€/);
 });
 
 test("Ohne gewählten Monat wird der Vormonat vorgeschlagen", async ({ page }) => {
