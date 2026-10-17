@@ -107,3 +107,7 @@ _Avoid_: Abrechnungsperiode, Rechnungszeitraum
 **Rechnungsvorbereitung**:
 Die Zusammenstellung aller abzurechnenden Pauschalen, Stunden und Zusatzaufträge eines Kunden für einen Zeitraum als Grundlage der Rechnung. Was darin abgerechnet wurde, wird nicht erneut berechnet.
 _Avoid_: Rechnungsentwurf, Abrechnungsliste
+
+**Abrechnung**:
+Eine als abgerechnet markierte Rechnungsvorbereitung: Kunde, Zeitraum, Positionen und Summe, wann und von wem, dazu die umfassten Zeiteinträge und Pauschal-Monate. Diese sind danach für alle gesperrt und erscheinen in keiner weiteren Rechnungsvorbereitung. Das Büro kann eine Abrechnung nach Rückfrage zurücknehmen; sie bleibt dann als zurückgenommen stehen, und ihr Inhalt ist wieder abrechenbar.
+_Avoid_: Rechnung (die schreibt das Büro in DATEV), Abschluss

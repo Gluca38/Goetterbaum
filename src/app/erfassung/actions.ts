@@ -174,8 +174,9 @@ export async function zeiteintragAendern(
   if (!bisher || bisher.ende === null) return FEHLER(texte.nachtrag.nichtGefunden);
   const eigener = bisher.mitarbeiter_id === ich.id;
   if (!eigener && !darfFuerAndereErfassen(ich.rolle)) return FEHLER(texte.nachtrag.nichtGefunden);
-  // Freigegebene ändert nur noch das Büro; die Datenbank sperrt sie für alle
-  // anderen ohnehin.
+  // Abgerechnete ändert niemand, freigegebene nur noch das Büro; die
+  // Datenbank sperrt sie ohnehin.
+  if (bisher.abgerechnet) return FEHLER(texte.abrechnung.gesperrt);
   if (bisher.freigegeben && ich.rolle !== "buero") return FEHLER(texte.freigabe.gesperrt);
 
   const eingabe = pruefeNachtragEingabe(formData, Date.now(), {

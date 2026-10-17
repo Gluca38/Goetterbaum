@@ -14,6 +14,8 @@ type Stand = {
   nachtrag: boolean;
   // Fehlt in Ständen, die vor Einführung der Freigabe protokolliert wurden.
   freigegeben_am?: string | null;
+  // Die Abrechnung, die ihn umfasst; fehlt in Ständen von vor #16.
+  abgerechnet_in?: string | null;
 };
 
 // Eine Zeile, wie sie die Datenbank-Funktion protokoll_zum_zeiteintrag
@@ -76,6 +78,7 @@ function felder(stand: Stand, namen: Namen): [string, string][] {
     [t.ende, zeitAlsText(stand.ende)],
     [t.nachtrag, stand.nachtrag ? t.ja : t.nein],
     [t.freigegeben, zeitAlsText(stand.freigegeben_am ?? null)],
+    [t.abgerechnet, stand.abgerechnet_in ? t.ja : t.nein],
   ];
 }
 

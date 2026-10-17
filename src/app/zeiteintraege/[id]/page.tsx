@@ -25,8 +25,9 @@ export default function ZeiteintragProtokoll({ params }: PageProps<"/zeiteintrae
   );
 }
 
-// Der Zeiteintrag, ob und von wem er freigegeben ist (mit Rücknahme), und
-// darunter jede Änderung: wann, wer, was vorher und was nachher.
+// Der Zeiteintrag, ob und von wem er freigegeben ist (mit Rücknahme,
+// solange er nicht abgerechnet ist), und darunter jede Änderung: wann,
+// wer, was vorher und was nachher.
 async function Protokoll({ id: idVersprechen }: { id: Promise<string> }) {
   const t = texte.zeiteintraege;
   const geladen = await ladeZeiteintragMitProtokoll(await createClient(), await idVersprechen);
@@ -40,7 +41,7 @@ async function Protokoll({ id: idVersprechen }: { id: Promise<string> }) {
     );
   }
 
-  const { eintrag, protokoll, jetzt } = geladen;
+  const { eintrag, abgerechnet, protokoll, jetzt } = geladen;
   const unvollstaendig = istUnvollstaendig(eintrag, jetzt);
   return (
     <>
@@ -68,11 +69,15 @@ async function Protokoll({ id: idVersprechen }: { id: Promise<string> }) {
               eintrag.freigegeben_von_name ?? texte.protokoll.unbekannt,
             )}
           </p>
-          <AktionsKnopf
-            aktion={freigabeZuruecknehmen.bind(null, eintrag.id)}
-            knopf={texte.freigabe.zuruecknehmen}
-            knopfLaeuft={texte.freigabe.zuruecknehmenLaeuft}
-          />
+          {abgerechnet ? (
+            <p>{texte.abrechnung.abgerechnet}</p>
+          ) : (
+            <AktionsKnopf
+              aktion={freigabeZuruecknehmen.bind(null, eintrag.id)}
+              knopf={texte.freigabe.zuruecknehmen}
+              knopfLaeuft={texte.freigabe.zuruecknehmenLaeuft}
+            />
+          )}
         </>
       )}
       {protokoll.length === 0 ? (

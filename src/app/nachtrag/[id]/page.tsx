@@ -65,12 +65,12 @@ async function Aendern({
       </>
     );
   }
-  // Freigegebene Einträge ändert nur noch das Büro; die Datenbank sperrt sie
-  // für alle anderen.
-  if (eintrag.freigegeben && ich.rolle !== "buero") {
+  // Abgerechnete Einträge ändert niemand, freigegebene nur noch das Büro;
+  // die Datenbank sperrt sie ohnehin.
+  if (eintrag.abgerechnet || (eintrag.freigegeben && ich.rolle !== "buero")) {
     return (
       <>
-        <p>{texte.freigabe.gesperrt}</p>
+        <p>{eintrag.abgerechnet ? texte.abrechnung.gesperrt : texte.freigabe.gesperrt}</p>
         <p>
           <Link
             href={

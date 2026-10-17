@@ -75,6 +75,8 @@ async function kundeMitZeiten(firmaId: string) {
     pauschalObjekt: pauschal.bezeichnung,
     stundenObjekt: stunden.bezeichnung,
     taetigkeit: taetigkeit.name,
+    // Der erste Eintrag vom 10.03. im Stunden-Objekt.
+    eintragId: freigegebene[0],
   };
 }
 
@@ -236,4 +238,63 @@ test("Mitarbeiter sehen die Rechnungsvorbereitung nicht und bekommen keine CSV-D
     `/rechnungsvorbereitung/csv?kunde=${kundeId}&monat=2026-03`,
   );
   expect(antwort.status()).toBe(403);
+});
+
+test("Das Büro markiert eine Rechnungsvorbereitung als abgerechnet und nimmt die Abrechnung nach Rückfrage zurück", async ({
+  page,
+}) => {
+  const { firmaA } = testdaten();
+  const buero = await legeEigenenZugangAn(firmaA.id, "buero");
+  const kunde = await kundeMitZeiten(firmaA.id);
+  const positionen = page.locator("table").filter({ hasText: "Stundensatz" });
+  const abrechnungen = page.locator("table").filter({ hasText: "Status" });
+
+  await meldeAn(page, buero);
+  await erwarteAngemeldet(page, buero.name);
+  await page.goto(`/rechnungsvorbereitung?kunde=${kunde.kundeId}&monat=2026-03`);
+  await expect(page.locator("tfoot")).toContainText(/Summe\s*567,50\s€/);
+  await expect(page.getByText("Für diesen Kunden gibt es noch keine Abrechnungen.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Als abgerechnet markieren" }).click();
+  await expect(page.getByText("In diesem Zeitraum gibt es nichts abzurechnen.")).toBeVisible();
+  await expect(positionen).toHaveCount(0);
+  const abrechnung = abrechnungen.getByRole("row").filter({ hasText: "März 2026" });
+  await expect(abrechnung).toContainText(/567,50\s€/);
+  await expect(abrechnung).toContainText(buero.name);
+  await expect(abrechnung).toContainText("gültig");
+
+  // Der April bleibt, wie er war.
+  await page.goto(`/rechnungsvorbereitung?kunde=${kunde.kundeId}&monat=2026-04`);
+  await expect(page.locator("tfoot")).toContainText(/Summe\s*537,50\s€/);
+
+  // Der abgerechnete Zeiteintrag ist gesperrt, auch die Freigabe.
+  await page.goto(`/zeiteintraege/${kunde.eintragId}`);
+  await expect(
+    page.getByText(/^Abgerechnet\. Der Zeiteintrag ist für alle gesperrt/),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Freigabe zurücknehmen" })).toHaveCount(0);
+  await expect(page.getByText("Abgerechnet: nein → ja")).toBeVisible();
+  await page.goto(`/nachtrag/${kunde.eintragId}`);
+  await expect(page.getByText(/^Dieser Zeiteintrag ist abgerechnet/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Speichern" })).toHaveCount(0);
+
+  // Zurückgenommen wird erst nach der Rückfrage.
+  await page.goto(`/rechnungsvorbereitung?kunde=${kunde.kundeId}&monat=2026-03`);
+  await abrechnung.getByRole("button", { name: "Zurücknehmen" }).click();
+  await expect(page.getByText(/^Abrechnung wirklich zurücknehmen\?/)).toBeVisible();
+  await page.getByRole("button", { name: "Abbrechen" }).click();
+  await expect(page.getByText(/^Abrechnung wirklich zurücknehmen\?/)).toHaveCount(0);
+  await expect(abrechnung).toContainText("gültig");
+
+  await abrechnung.getByRole("button", { name: "Zurücknehmen" }).click();
+  await page.getByRole("button", { name: "Ja, zurücknehmen" }).click();
+  await expect(abrechnung).toContainText(`zurückgenommen am`);
+  await expect(abrechnung).toContainText(buero.name);
+  await expect(abrechnung.getByRole("button")).toHaveCount(0);
+  await expect(page.locator("tfoot")).toContainText(/Summe\s*567,50\s€/);
+
+  // Die Rücknahme steht im Protokoll, und die Freigabe ist wieder änderbar.
+  await page.goto(`/zeiteintraege/${kunde.eintragId}`);
+  await expect(page.getByText("Abgerechnet: ja → nein")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Freigabe zurücknehmen" })).toBeVisible();
 });

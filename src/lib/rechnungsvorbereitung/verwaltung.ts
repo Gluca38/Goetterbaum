@@ -2,16 +2,17 @@
 // lässt ihn rechnen. Welche Daten der Nutzer sehen darf, entscheiden die
 // Zugriffsregeln der Datenbank (nur das Büro der eigenen Firma).
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Abrechnungsart, Rundungsregel } from "@/lib/abrechnung";
+import type { Abrechnungsart, Abrechnungszeitraum, Rundungsregel } from "@/lib/abrechnung";
 import { ladeFirma } from "@/lib/firma/verwaltung";
 import { ladeKunde, type Kunde } from "@/lib/kunden/verwaltung";
 import {
   rechnungsvorbereitung,
+  type Monat,
   type Rechnungsvorbereitung,
   type Zeiteintrag,
 } from "@/lib/rechnungsvorbereitung";
 import { ladeKundenStundensaetze } from "@/lib/stundensaetze/verwaltung";
-import { gewaehlterZeitraum, type GewaehlterZeitraum } from "./zeitraum";
+import { gewaehlterZeitraum, monatVon, type GewaehlterZeitraum } from "./zeitraum";
 import type { Namen } from "./zeilen";
 
 // So viele Zeilen liefert die Schnittstelle höchstens auf einmal
@@ -77,9 +78,10 @@ export async function ladeRechnungsvorbereitung(
   if (taetigkeiten.error) throw taetigkeiten.error;
 
   const objektIds = objekte.data.map((o) => o.id);
-  const [zeiteintraege, nichtFreigegeben] = await Promise.all([
-    ladeFreigegebeneZeiteintraege(supabase, objektIds, zeitraum),
+  const [zeiteintraege, nichtFreigegeben, abgerechnetePauschalMonate] = await Promise.all([
+    ladeAbrechenbareZeiteintraege(supabase, objektIds, zeitraum),
     zaehleNichtFreigegebene(supabase, objektIds, zeitraum),
+    ladeAbgerechnetePauschalMonate(supabase, objektIds),
   ]);
 
   const ergebnis = rechnungsvorbereitung({
@@ -100,7 +102,7 @@ export async function ladeRechnungsvorbereitung(
       kundenStundensatzCent:
         kundenSaetze.find((s) => s.taetigkeit_id === t.id)?.stundensatz_cent ?? null,
     })),
-    // Zusatzaufträge und Abrechnungen gibt es noch nicht (#16, #17).
+    // Zusatzaufträge gibt es noch nicht (#17).
     zusatzauftraege: [],
     zeiteintraege: zeiteintraege.map((z) => ({
       id: z.id,
@@ -112,7 +114,7 @@ export async function ladeRechnungsvorbereitung(
       beginn: z.beginn,
       ende: z.ende,
     })),
-    abgerechnetePauschalMonate: [],
+    abgerechnetePauschalMonate,
   });
 
   return {
@@ -126,12 +128,11 @@ export async function ladeRechnungsvorbereitung(
   };
 }
 
-// Die freigegebenen Zeiteinträge in den Objekten, die im Zeitraum
-// beginnen. Frühere bleiben bewusst draußen: Solange sich Abgerechnetes
-// nicht markieren lässt (#16), würden sie sonst in jedem späteren Zeitraum
-// erneut berechnet. Ein spät freigegebener Eintrag erscheint deshalb nur,
-// wenn das Büro seinen Zeitraum noch einmal aufruft.
-async function ladeFreigegebeneZeiteintraege(
+// Die freigegebenen, noch nicht abgerechneten Zeiteinträge in den
+// Objekten, die im Zeitraum beginnen. Frühere bleiben auf Wunsch des Büros
+// draußen: Ein spät freigegebener Eintrag erscheint, wenn das Büro seinen
+// Zeitraum noch einmal aufruft.
+async function ladeAbrechenbareZeiteintraege(
   supabase: SupabaseClient,
   objektIds: string[],
   zeitraum: GewaehlterZeitraum,
@@ -144,6 +145,7 @@ async function ladeFreigegebeneZeiteintraege(
       .select("id, mitarbeiter_id, art, objekt_id, taetigkeit_id, beginn, ende")
       .in("objekt_id", objektIds)
       .not("freigegeben_am", "is", null)
+      .is("abgerechnet_in", null)
       .gte("beginn", zeitraum.ab)
       .lt("beginn", zeitraum.bisVor)
       .order("id")
@@ -153,6 +155,22 @@ async function ladeFreigegebeneZeiteintraege(
     alle.push(...data);
     if (data.length < SEITE) return alle;
   }
+}
+
+// Die Pauschal-Monate der Objekte aus gültigen Abrechnungen.
+async function ladeAbgerechnetePauschalMonate(
+  supabase: SupabaseClient,
+  objektIds: string[],
+): Promise<{ objektId: string; monat: Monat }[]> {
+  if (objektIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("abrechnung_pauschal_monat")
+    .select("objekt_id, monat")
+    .in("objekt_id", objektIds)
+    .eq("gueltig", true)
+    .returns<{ objekt_id: string; monat: string }[]>();
+  if (error) throw error;
+  return data.map((m) => ({ objektId: m.objekt_id, monat: monatVon(m.monat) }));
 }
 
 async function zaehleNichtFreigegebene(
@@ -192,4 +210,27 @@ export async function ladeRechnungsvorbereitungAusAdresse(
   const zeitraum = gewaehlterZeitraum(parameter.monat, kunde.abrechnungszeitraum, Date.now());
   const geladen = await ladeRechnungsvorbereitung(supabase, kunde, firma.rundungsregel, zeitraum);
   return { ...geladen, kunde, zeitraum };
+}
+
+// Eine bisherige Abrechnung eines Kunden, wie die Datenbank-Funktion
+// abrechnungen_des_kunden sie liefert. erster_monat als "JJJJ-MM-01".
+export type BisherigeAbrechnung = {
+  id: string;
+  erster_monat: string;
+  abrechnungszeitraum: Abrechnungszeitraum;
+  summe_cent: number;
+  abgerechnet_am: string;
+  abgerechnet_von_name: string;
+  zurueckgenommen_am: string | null;
+  zurueckgenommen_von_name: string | null;
+};
+
+// Alle Abrechnungen des Kunden, die neueste zuerst, auch zurückgenommene.
+export async function ladeAbrechnungen(
+  supabase: SupabaseClient,
+  kundeId: string,
+): Promise<BisherigeAbrechnung[]> {
+  const { data, error } = await supabase.rpc("abrechnungen_des_kunden", { fuer_kunde: kundeId });
+  if (error) throw error;
+  return data;
 }
