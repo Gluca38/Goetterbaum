@@ -178,7 +178,10 @@ test("Jeder sieht und stoppt nur seine eigenen Zeiteinträge, auch über die Fir
       .select("id")
       .in("id", [meiner, fremder])
       .order("id");
-    expect(data?.map((e) => e.id), zugang.name).toEqual(sichtbar);
+    expect(
+      data?.map((e) => e.id),
+      zugang.name,
+    ).toEqual(sichtbar);
   }
 });
 

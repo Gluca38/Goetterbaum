@@ -55,7 +55,12 @@ test("Ein Mitarbeiter trägt eigene Einträge nach und ändert sie; die Datenban
   const { objektId, taetigkeitId } = await auswahl(firmaA.id);
   const anderes = await auswahl(firmaA.id);
   const supabase = await schnittstelleAls(ich);
-  const taetigkeit = { firma_id: firmaA.id, art: "taetigkeit", objekt_id: objektId, taetigkeit_id: taetigkeitId };
+  const taetigkeit = {
+    firma_id: firmaA.id,
+    art: "taetigkeit",
+    objekt_id: objektId,
+    taetigkeit_id: taetigkeitId,
+  };
 
   // Nachtragen geht nur für sich selbst und nicht in die Zukunft.
   const fuerKollegen = await supabase
@@ -140,7 +145,9 @@ test("Einträge desselben Mitarbeiters überschneiden sich nie, auch nicht mit e
   const stunde = Math.floor(Date.now() / STUNDE) * STUNDE;
   const um = (stunden: number) => new Date(stunde - stunden * STUNDE).toISOString();
 
-  const erster = await supabase.from("zeiteintrag").insert({ ...fahrt, beginn: um(10), ende: um(8) });
+  const erster = await supabase
+    .from("zeiteintrag")
+    .insert({ ...fahrt, beginn: um(10), ende: um(8) });
   expect(erster.error).toBeNull();
 
   for (const [beginn, ende] of [
@@ -240,7 +247,10 @@ test("Jede Änderung steht im Protokoll, das nur das Büro der Firma lesen und n
     [firmaB.buero, 0],
   ] as const) {
     const andere = await schnittstelleAls(zugang);
-    const tabelle = await andere.from("zeiteintrag_protokoll").select("id").eq("zeiteintrag_id", id);
+    const tabelle = await andere
+      .from("zeiteintrag_protokoll")
+      .select("id")
+      .eq("zeiteintrag_id", id);
     expect(tabelle.data, zugang.name).toHaveLength(anzahl);
     const funktion = await andere.rpc("protokoll_zum_zeiteintrag", { eintrag: id });
     expect(funktion.data, zugang.name).toHaveLength(anzahl);
@@ -280,7 +290,13 @@ test("Das Büro sieht alle Einträge der Firma mit Nachtrag-Markierung, andere R
   const supabase = await schnittstelleAls(ich);
   const { data } = await supabase
     .from("zeiteintrag")
-    .insert({ firma_id: firmaA.id, mitarbeiter_id: ich.id, art: "fahrt", beginn: vor(3), ende: vor(2) })
+    .insert({
+      firma_id: firmaA.id,
+      mitarbeiter_id: ich.id,
+      art: "fahrt",
+      beginn: vor(3),
+      ende: vor(2),
+    })
     .select("id")
     .single<{ id: string }>();
 

@@ -266,9 +266,9 @@ export const texte = {
     laeuftNoch: "Dieser Zeiteintrag läuft noch. Stoppe ihn, bevor du ihn änderst.",
     fehlerUeberschneidung:
       "Diese Zeit überschneidet sich mit einem anderen Zeiteintrag von dir. Bitte prüfe Beginn und Ende.",
-    fehlerNichtGespeichert:
-      "Der Nachtrag wurde nicht gespeichert. Bitte versuche es noch einmal.",
-    ohneNetz: "Kein Internet: Der Nachtrag wurde nicht gespeichert. Bitte versuche es später noch einmal.",
+    fehlerNichtGespeichert: "Der Nachtrag wurde nicht gespeichert. Bitte versuche es noch einmal.",
+    ohneNetz:
+      "Kein Internet: Der Nachtrag wurde nicht gespeichert. Bitte versuche es später noch einmal.",
     fehlerArt: "Bitte wähle Tätigkeit oder Fahrt.",
     fehlerDatum: "Bitte gib ein gültiges Datum ein.",
     fehlerUhrzeit: "Bitte gib Beginn und Ende als Uhrzeit ein, z. B. 07:30.",
@@ -295,8 +295,7 @@ export const texte = {
     spalteWer: "Wer",
     spalteAktion: "Aktion",
     spalteAenderung: "Änderung",
-    aenderung: (feld: string, vorher: string, nachher: string) =>
-      `${feld}: ${vorher} → ${nachher}`,
+    aenderung: (feld: string, vorher: string, nachher: string) => `${feld}: ${vorher} → ${nachher}`,
     zurUebersicht: "Zurück zu den Zeiteinträgen",
   },
   protokoll: {

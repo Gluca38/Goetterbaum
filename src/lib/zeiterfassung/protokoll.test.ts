@@ -51,7 +51,12 @@ test("Das Anlegen zeigt alle Angaben, das Ändern nur, was sich geändert hat", 
       geaendert_am: "2026-11-02T07:05:00+00:00",
       geaendert_von_name: "Anna Fleißig",
       vorher: GESTOPPT,
-      nachher: { ...GESTOPPT, objekt_id: HAUS_B, beginn: "2026-10-16T05:45:00+00:00", nachtrag: true },
+      nachher: {
+        ...GESTOPPT,
+        objekt_id: HAUS_B,
+        beginn: "2026-10-16T05:45:00+00:00",
+        nachtrag: true,
+      },
     },
   ];
 

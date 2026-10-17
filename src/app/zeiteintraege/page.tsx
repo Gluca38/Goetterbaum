@@ -49,9 +49,7 @@ async function Liste() {
               <tr key={e.id}>
                 <td>{e.mitarbeiter_name}</td>
                 <td>{tagUndZeit(e.beginn, e.ende, t.laeuft)}</td>
-                <td>
-                  {wasUndWo(e)}
-                </td>
+                <td>{wasUndWo(e)}</td>
                 <td>{e.nachtrag ? texte.nachtrag.markierung : ""}</td>
                 <td>
                   <Link href={`/zeiteintraege/${e.id}`}>{t.protokollOeffnen}</Link>

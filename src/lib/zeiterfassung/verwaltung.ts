@@ -2,11 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { istId } from "@/lib/id";
 import type { Sparte } from "@/lib/sparte";
 import { angezeigtAb, type MeinZeiteintrag, type ZeiteintragArt } from "./anzeige";
-import {
-  protokollAnzeigen,
-  type AngezeigteProtokollZeile,
-  type ProtokollZeile,
-} from "./protokoll";
+import { protokollAnzeigen, type AngezeigteProtokollZeile, type ProtokollZeile } from "./protokoll";
 
 // Was ein Mitarbeiter beim Start sieht. Preise und Kunden liefern die
 // Datenbank-Funktionen bewusst nicht mit.

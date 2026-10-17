@@ -49,9 +49,10 @@ test("Eine nachgetragene Fahrt hat kein Objekt und keine Tätigkeit, auch wenn w
 });
 
 test("Eine Tätigkeit braucht Objekt und Tätigkeit", () => {
-  expect(pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, objekt: "" }), JETZT)).toEqual(
-    { ok: false, fehler: "Bitte wähle ein Objekt." },
-  );
+  expect(pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, objekt: "" }), JETZT)).toEqual({
+    ok: false,
+    fehler: "Bitte wähle ein Objekt.",
+  });
   expect(
     pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, taetigkeit: "x" }), JETZT),
   ).toEqual({ ok: false, fehler: "Bitte wähle eine Tätigkeit." });
@@ -66,9 +67,16 @@ test("Ohne gültige Art, Datum oder Uhrzeit wird nichts nachgetragen", () => {
     fehler: "Bitte wähle Tätigkeit oder Fahrt.",
   });
   for (const datum of ["", "16.10.2026", "2026-02-30"]) {
-    expect(fehler({ datum }), datum).toEqual({ ok: false, fehler: "Bitte gib ein gültiges Datum ein." });
+    expect(fehler({ datum }), datum).toEqual({
+      ok: false,
+      fehler: "Bitte gib ein gültiges Datum ein.",
+    });
   }
-  for (const [von, bis] of [["", "09:00"], ["07:00", "9 Uhr"], ["24:00", "25:00"]]) {
+  for (const [von, bis] of [
+    ["", "09:00"],
+    ["07:00", "9 Uhr"],
+    ["24:00", "25:00"],
+  ]) {
     expect(fehler({ von, bis }), `${von}–${bis}`).toEqual({
       ok: false,
       fehler: "Bitte gib Beginn und Ende als Uhrzeit ein, z. B. 07:30.",
@@ -77,7 +85,10 @@ test("Ohne gültige Art, Datum oder Uhrzeit wird nichts nachgetragen", () => {
 });
 
 test("Das Ende muss nach dem Beginn liegen; über Mitternacht sind es zwei Einträge", () => {
-  for (const [von, bis] of [["22:00", "02:00"], ["08:00", "08:00"]]) {
+  for (const [von, bis] of [
+    ["22:00", "02:00"],
+    ["08:00", "08:00"],
+  ]) {
     expect(
       pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, von, bis }), JETZT),
       `${von}–${bis}`,
@@ -97,9 +108,9 @@ test("Ein Nachtrag darf nicht in der Zukunft enden", () => {
     ok: false,
     fehler: "Ein Nachtrag kann nicht in der Zukunft enden.",
   };
-  expect(
-    pruefeNachtragEingabe(formular({ ...bisJetzt, bis: "14:01" }), JETZT),
-  ).toEqual(fehlerZukunft);
+  expect(pruefeNachtragEingabe(formular({ ...bisJetzt, bis: "14:01" }), JETZT)).toEqual(
+    fehlerZukunft,
+  );
   expect(
     pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, datum: "2026-10-17" }), JETZT),
   ).toEqual(fehlerZukunft);
@@ -121,7 +132,11 @@ test("Beim Ändern bleibt eine unveränderte Uhrzeit sekundengenau wie gespeiche
   });
   // An einem anderen Tag gilt die neue Zeit.
   expect(
-    pruefeNachtragEingabe(formular({ ...TAETIGKEIT_AM_MORGEN, datum: "2026-10-15" }), JETZT, bisher),
+    pruefeNachtragEingabe(
+      formular({ ...TAETIGKEIT_AM_MORGEN, datum: "2026-10-15" }),
+      JETZT,
+      bisher,
+    ),
   ).toMatchObject({
     ok: true,
     daten: { beginn: "2026-10-15T05:30:00.000Z", ende: "2026-10-15T07:45:00.000Z" },
