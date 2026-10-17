@@ -134,9 +134,9 @@ test("Zur Auswahl stehen nur aktive Objekte und Tätigkeiten, und ohne Auswahl s
   await expect(page.getByText("Kein Objekt gefunden.")).toBeVisible();
   const taetigkeiten = page.getByRole("combobox", { name: /^Tätigkeit/ });
   await expect(taetigkeiten.getByRole("option", { name: taetigkeit.name })).toHaveCount(1);
-  await expect(
-    taetigkeiten.getByRole("option", { name: archivierteTaetigkeit.name }),
-  ).toHaveCount(0);
+  await expect(taetigkeiten.getByRole("option", { name: archivierteTaetigkeit.name })).toHaveCount(
+    0,
+  );
 
   await startKnopf(page).click();
   await expect(page.getByRole("alert").filter({ hasText: "Objekt" })).toHaveText(

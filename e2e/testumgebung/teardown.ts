@@ -38,9 +38,6 @@ export default async function teardown() {
     if (error) throw error;
   }
 
-  const { error: loeschFehler } = await supabase
-    .from("firma")
-    .delete()
-    .in("id", firmaIds);
+  const { error: loeschFehler } = await supabase.from("firma").delete().in("id", firmaIds);
   if (loeschFehler) throw loeschFehler;
 }

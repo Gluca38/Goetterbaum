@@ -1,10 +1,5 @@
 import { expect, test } from "vitest";
-import {
-  einladungsFehler,
-  pruefeAenderung,
-  zugangsStatus,
-  type Bestand,
-} from "./regeln";
+import { einladungsFehler, pruefeAenderung, zugangsStatus, type Bestand } from "./regeln";
 
 const anna: Bestand = {
   id: "anna",
@@ -22,15 +17,13 @@ test("Das Büro kann sich nicht selbst deaktivieren", () => {
 });
 
 test("Das Büro kann sich nicht selbst die Büro-Rolle entziehen", () => {
-  expect(
-    pruefeAenderung(anna, { ...anna, rolle: "vorarbeiter" }, "anna"),
-  ).toBe("Du kannst dir nicht selbst die Rolle Büro entziehen.");
+  expect(pruefeAenderung(anna, { ...anna, rolle: "vorarbeiter" }, "anna")).toBe(
+    "Du kannst dir nicht selbst die Rolle Büro entziehen.",
+  );
 });
 
 test("Andere Mitarbeiter darf das Büro deaktivieren und herabstufen", () => {
-  expect(
-    pruefeAenderung(anna, { ...anna, rolle: "mitarbeiter", aktiv: false }, "bert"),
-  ).toBeNull();
+  expect(pruefeAenderung(anna, { ...anna, rolle: "mitarbeiter", aktiv: false }, "bert")).toBeNull();
 });
 
 test("Wer schon eingeladen ist, behält seine E-Mail", () => {

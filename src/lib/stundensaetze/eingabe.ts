@@ -18,8 +18,7 @@ export type KundenStundensatzDaten = {
 };
 
 export type EingabeErgebnis =
-  | { ok: true; daten: KundenStundensatzDaten }
-  | { ok: false; fehler: string };
+  { ok: true; daten: KundenStundensatzDaten } | { ok: false; fehler: string };
 
 // Prüft die Angaben aus dem Formular beim Kunden. Ob die Tätigkeit zur
 // Firma gehört, prüfen die Server-Aktion und die Datenbank.

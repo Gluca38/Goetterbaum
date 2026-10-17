@@ -1,11 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  dienstZugang,
-  legeZugangAn,
-  speichereTestdaten,
-  TEST_FIRMA_PRAEFIX,
-} from "./testdaten";
+import { dienstZugang, legeZugangAn, speichereTestdaten, TEST_FIRMA_PRAEFIX } from "./testdaten";
 
 // Legt vor allen Browsertests zwei eigene Test-Firmen mit Zugängen auf
 // Supabase-Staging an. Einladungs-Mails werden dabei nicht verschickt.
@@ -17,9 +12,7 @@ export default async function setup() {
         "Für die Browsertests fehlen NEXT_PUBLIC_SUPABASE_URL oder SUPABASE_SECRET_KEY.",
       );
     }
-    console.warn(
-      "Kein SUPABASE_SECRET_KEY gesetzt: Tests mit Anmeldung werden übersprungen.",
-    );
+    console.warn("Kein SUPABASE_SECRET_KEY gesetzt: Tests mit Anmeldung werden übersprungen.");
     return;
   }
 

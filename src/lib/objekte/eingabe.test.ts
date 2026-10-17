@@ -63,9 +63,7 @@ test("Ein Stunden-Objekt hat keine Pauschale", () => {
 });
 
 test("Eine Pauschale bei Stundenabrechnung wird abgelehnt statt still verworfen", () => {
-  expect(
-    pruefeObjektEingabe(formular({ ...PAUSCHAL_OBJEKT, abrechnungsart: "stunden" })),
-  ).toEqual({
+  expect(pruefeObjektEingabe(formular({ ...PAUSCHAL_OBJEKT, abrechnungsart: "stunden" }))).toEqual({
     ok: false,
     fehler: "Bei Stundenabrechnung gibt es keine Pauschale. Bitte lass das Feld leer.",
   });
@@ -86,12 +84,12 @@ test("Ohne Bezeichnung, Kunde oder Abrechnungsart kein Objekt", () => {
 });
 
 test("Eine Pauschale über der Höchstgrenze wird verständlich abgelehnt", () => {
-  expect(
-    pruefeObjektEingabe(formular({ ...PAUSCHAL_OBJEKT, pauschale: "21.474.837,00" })),
-  ).toEqual({
-    ok: false,
-    fehler: "Die Pauschale ist kein gültiger Betrag. Beispiel: 1.250,00",
-  });
+  expect(pruefeObjektEingabe(formular({ ...PAUSCHAL_OBJEKT, pauschale: "21.474.837,00" }))).toEqual(
+    {
+      ok: false,
+      fehler: "Die Pauschale ist kein gültiger Betrag. Beispiel: 1.250,00",
+    },
+  );
   const hoechstbetrag = pruefeObjektEingabe(
     formular({ ...PAUSCHAL_OBJEKT, pauschale: "21.474.836,47" }),
   );

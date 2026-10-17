@@ -45,7 +45,8 @@ test("Eine unvollständige Rechnungsadresse wird abgelehnt", () => {
 });
 
 test("Nur monatlich oder quartalsweise ist als Abrechnungszeitraum erlaubt", () => {
-  expect(
-    pruefeKundenEingabe(formular({ ...GUELTIG, abrechnungszeitraum: "jährlich" })),
-  ).toEqual({ ok: false, fehler: "Bitte wähle einen Abrechnungszeitraum." });
+  expect(pruefeKundenEingabe(formular({ ...GUELTIG, abrechnungszeitraum: "jährlich" }))).toEqual({
+    ok: false,
+    fehler: "Bitte wähle einen Abrechnungszeitraum.",
+  });
 });

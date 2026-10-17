@@ -16,9 +16,7 @@ test("Ohne Anmeldung führt jede Seite zur Anmeldung", async ({ page }) => {
   }
 });
 
-test("Es gibt keine Möglichkeit, sich selbst zu registrieren", async ({
-  page,
-}) => {
+test("Es gibt keine Möglichkeit, sich selbst zu registrieren", async ({ page }) => {
   await page.goto("/anmelden");
   await expect(page.getByText(/registrier/i)).toHaveCount(0);
 
@@ -40,9 +38,7 @@ test("Es gibt keine Möglichkeit, sich selbst zu registrieren", async ({
   expect(error?.code).toBe("signup_disabled");
 });
 
-test("Büro-Nutzer meldet sich an, sieht Name und Rolle und meldet sich ab", async ({
-  page,
-}) => {
+test("Büro-Nutzer meldet sich an, sieht Name und Rolle und meldet sich ab", async ({ page }) => {
   const { firmaA } = testdaten();
 
   await meldeAn(page, firmaA.buero);
@@ -67,16 +63,12 @@ test("Mit falschem Passwort ist keine Anmeldung möglich", async ({ page }) => {
 
   await meldeAn(page, { ...firmaA.buero, passwort: "falsches-passwort" });
 
-  await expect(anmeldeFehler(page)).toHaveText(
-    "E-Mail oder Passwort ist falsch.",
-  );
+  await expect(anmeldeFehler(page)).toHaveText("E-Mail oder Passwort ist falsch.");
   await page.goto("/");
   await erwarteAnmeldeseite(page);
 });
 
-test("Ein deaktivierter Mitarbeiter kann sich nicht anmelden", async ({
-  page,
-}) => {
+test("Ein deaktivierter Mitarbeiter kann sich nicht anmelden", async ({ page }) => {
   const { firmaA } = testdaten();
 
   await meldeAn(page, firmaA.deaktiviert);

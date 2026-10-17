@@ -27,9 +27,7 @@ test("Wer sein Passwort vergessen hat, legt über den Link aus der Mail ein neue
   await expect(page.getByRole("heading", { name: "Passwort vergessen" })).toBeVisible();
   await feld(page, "E-Mail").fill(paula.email);
   await page.getByRole("button", { name: "Link anfordern" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "haben wir dir einen Link geschickt",
-  );
+  await expect(page.getByRole("status")).toContainText("haben wir dir einen Link geschickt");
 
   await page.goto(await linkAusMail(paula.email, "recovery"));
   await legePasswortFest(page, neuesPasswort);
@@ -50,16 +48,16 @@ test("Für unbekannte Adressen sieht die Antwort genauso aus", async ({ page }) 
   // Diese Adresse hat keinen Zugang, Supabase verschickt also nichts.
   await feld(page, "E-Mail").fill("delivered+e2e-unbekannt@resend.dev");
   await page.getByRole("button", { name: "Link anfordern" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "haben wir dir einen Link geschickt",
-  );
+  await expect(page.getByRole("status")).toContainText("haben wir dir einen Link geschickt");
 });
 
 test("Ein ungültiger Link führt mit Hinweis zur Anmeldung", async ({ page }) => {
   await page.goto("/auth/bestaetigen?token_hash=ungueltig&type=recovery");
   await expect(page).toHaveURL(/\/anmelden\?fehler=link$/);
   await expect(page.getByRole("heading", { name: "Anmelden" })).toBeVisible();
-  await expect(page.getByText("Dieser Link ist ungültig oder abgelaufen.", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText("Dieser Link ist ungültig oder abgelaufen.", { exact: false }),
+  ).toBeVisible();
 });
 
 test("Ohne Anmeldung lässt sich kein Passwort festlegen", async ({ page }) => {

@@ -51,9 +51,7 @@ export function TaetigkeitsFormular({
           <input
             name="standard_stundensatz"
             inputMode="decimal"
-            defaultValue={
-              vorgabe ? euroAlsEingabe(vorgabe.standard_stundensatz_cent) : ""
-            }
+            defaultValue={vorgabe ? euroAlsEingabe(vorgabe.standard_stundensatz_cent) : ""}
             required
           />
         </label>

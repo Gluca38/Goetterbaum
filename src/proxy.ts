@@ -4,11 +4,7 @@ import { supabaseUmgebung } from "@/lib/supabase/umgebung";
 
 // Seiten, die ohne Anmeldung erreichbar sind. /auth/bestaetigen ist das
 // Ziel der Links aus Einladungs- und "Passwort vergessen"-Mails.
-const OEFFENTLICHE_PFADE = [
-  "/anmelden",
-  "/passwort-vergessen",
-  "/auth/bestaetigen",
-];
+const OEFFENTLICHE_PFADE = ["/anmelden", "/passwort-vergessen", "/auth/bestaetigen"];
 
 // Läuft vor jeder Seite: erneuert die Sitzung und schickt Besucher ohne
 // Anmeldung zur Anmeldeseite. Die eigentliche Sicherheit liegt in den
@@ -24,16 +20,12 @@ export async function proxy(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet, headers) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
-        );
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );
-        Object.entries(headers).forEach(([name, value]) =>
-          response.headers.set(name, value),
-        );
+        Object.entries(headers).forEach(([name, value]) => response.headers.set(name, value));
       },
     },
   });
@@ -48,9 +40,7 @@ export async function proxy(request: NextRequest) {
     ziel.pathname = "/anmelden";
     ziel.search = "";
     const umleitung = NextResponse.redirect(ziel);
-    response.cookies
-      .getAll()
-      .forEach((cookie) => umleitung.cookies.set(cookie));
+    response.cookies.getAll().forEach((cookie) => umleitung.cookies.set(cookie));
     return umleitung;
   }
 

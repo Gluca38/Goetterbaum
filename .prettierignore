@@ -1,0 +1,10 @@
+# Erzeugt oder von Werkzeugen gepflegt
+.next/
+next-env.d.ts
+playwright-report/
+test-results/
+supabase/.temp/
+package-lock.json
+
+# E-Mail-Vorlagen: E-Mail-Programme sind bei HTML empfindlich
+supabase/templates/

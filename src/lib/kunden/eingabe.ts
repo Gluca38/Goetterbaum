@@ -1,7 +1,4 @@
-import {
-  istAbrechnungszeitraum,
-  type Abrechnungszeitraum,
-} from "@/lib/abrechnung";
+import { istAbrechnungszeitraum, type Abrechnungszeitraum } from "@/lib/abrechnung";
 import { pruefeAdresse, type Adresse } from "@/lib/adresse";
 import { texte } from "@/texte";
 
@@ -11,9 +8,7 @@ export type KundenDaten = Adresse & {
   abrechnungszeitraum: Abrechnungszeitraum;
 };
 
-export type EingabeErgebnis =
-  | { ok: true; daten: KundenDaten }
-  | { ok: false; fehler: string };
+export type EingabeErgebnis = { ok: true; daten: KundenDaten } | { ok: false; fehler: string };
 
 // Prüft die Angaben aus dem Kunden-Formular und bringt sie in eine
 // einheitliche Form.

@@ -1,9 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { meldeAn, schnittstelleAls, testdaten } from "./testumgebung/hilfen";
 
-test("Ein Nutzer einer zweiten Firma sieht keine Daten der ersten Firma", async ({
-  page,
-}) => {
+test("Ein Nutzer einer zweiten Firma sieht keine Daten der ersten Firma", async ({ page }) => {
   const { firmaA, firmaB } = testdaten();
 
   // In der App sieht er nur sich selbst.
@@ -15,9 +13,7 @@ test("Ein Nutzer einer zweiten Firma sieht keine Daten der ersten Firma", async 
   // der eigenen Firma, obwohl er als Büro alle Mitarbeiter sehen darf.
   const supabase = await schnittstelleAls(firmaB.buero);
 
-  const { data: firmen, error: firmenFehler } = await supabase
-    .from("firma")
-    .select("id");
+  const { data: firmen, error: firmenFehler } = await supabase.from("firma").select("id");
   expect(firmenFehler).toBeNull();
   expect(firmen).toEqual([{ id: firmaB.id }]);
 

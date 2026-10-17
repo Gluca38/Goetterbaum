@@ -30,9 +30,7 @@ export function pruefeAenderung(
 }
 
 // Wie weit der Mitarbeiter mit seinem Zugang ist, in Worten fürs Büro.
-export function zugangsStatus(
-  mitarbeiter: Pick<Bestand, "email" | "aktiv" | "hatZugang">,
-): string {
+export function zugangsStatus(mitarbeiter: Pick<Bestand, "email" | "aktiv" | "hatZugang">): string {
   const status = texte.mitarbeiter.status;
   if (!mitarbeiter.aktiv) return status.deaktiviert;
   if (!mitarbeiter.email) return status.keineEmail;
@@ -41,10 +39,7 @@ export function zugangsStatus(
 
 // Übersetzt den Fehlercode von Supabase beim Einladen in eine Meldung
 // fürs Büro.
-export function einladungsFehler(
-  code: string | undefined,
-  hatZugang: boolean,
-): string {
+export function einladungsFehler(code: string | undefined, hatZugang: boolean): string {
   const fehler = texte.mitarbeiter.einladung;
   if (code === "email_exists") {
     return hatZugang ? fehler.fehlerEinladungGeoeffnet : fehler.fehlerEmailVergeben;

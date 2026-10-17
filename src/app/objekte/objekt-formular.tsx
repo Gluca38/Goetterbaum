@@ -82,9 +82,7 @@ export function ObjektFormular({
             <input
               name="pauschale"
               inputMode="decimal"
-              defaultValue={
-                vorgabe?.pauschale_cent ? euroAlsEingabe(vorgabe.pauschale_cent) : ""
-              }
+              defaultValue={vorgabe?.pauschale_cent ? euroAlsEingabe(vorgabe.pauschale_cent) : ""}
               required
             />
           </label>

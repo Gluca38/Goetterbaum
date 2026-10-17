@@ -1,10 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { schnittstelleAls, testdaten } from "./testumgebung/hilfen";
-import {
-  dienstZugang,
-  legeKundeMitObjektAn,
-  legeTaetigkeitAn,
-} from "./testumgebung/testdaten";
+import { dienstZugang, legeKundeMitObjektAn, legeTaetigkeitAn } from "./testumgebung/testdaten";
 
 // Diese Tests gehen an der App vorbei direkt auf die öffentliche
 // Supabase-Schnittstelle. Sie prüfen, dass die Datenbank selbst schützt.
@@ -99,9 +95,7 @@ test("Das Büro kann Tätigkeiten und Stundensätze einer anderen Firma weder se
   const { kundeId, taetigkeitId } = await legeAbweichendenSatzAn(firmaA.id);
   const supabase = await schnittstelleAls(firmaB.buero);
 
-  expect((await supabase.from("taetigkeit").select("id").eq("id", taetigkeitId)).data).toEqual(
-    [],
-  );
+  expect((await supabase.from("taetigkeit").select("id").eq("id", taetigkeitId)).data).toEqual([]);
   expect(
     (await supabase.from("kunden_stundensatz").select("kunde_id").eq("kunde_id", kundeId)).data,
   ).toEqual([]);
@@ -158,10 +152,7 @@ test("Tätigkeiten lassen sich nicht löschen und nicht in eine andere Firma ver
   const { taetigkeitId } = await legeTaetigkeitAn(dienstZugang()!, firmaA.id);
   const supabase = await schnittstelleAls(firmaA.buero);
 
-  const { error: loeschFehler } = await supabase
-    .from("taetigkeit")
-    .delete()
-    .eq("id", taetigkeitId);
+  const { error: loeschFehler } = await supabase.from("taetigkeit").delete().eq("id", taetigkeitId);
   expect(loeschFehler?.code).toBe("42501");
   expect(await gespeicherteTaetigkeit(taetigkeitId)).not.toBeNull();
 

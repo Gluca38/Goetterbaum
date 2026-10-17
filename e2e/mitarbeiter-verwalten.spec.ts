@@ -55,17 +55,13 @@ test("Büro lädt einen neuen Mitarbeiter ein, der sein Passwort festlegt und si
   await expect(page.getByText("Zugang: Noch nicht eingeladen")).toBeVisible();
 
   await page.getByRole("button", { name: "Einladung senden" }).click();
-  await expect(page.getByRole("status")).toHaveText(
-    `Einladung an ${email} verschickt.`,
-  );
+  await expect(page.getByRole("status")).toHaveText(`Einladung an ${email} verschickt.`);
   await expect(page.getByText("Zugang: Eingeladen")).toBeVisible();
 
   // Die Einladung lässt sich erneut senden.
   await page.getByRole("button", { name: "Einladung erneut senden" }).click();
   await expect(page.getByRole("button", { name: "Einladung erneut senden" })).toBeEnabled();
-  await expect(page.getByRole("status")).toHaveText(
-    `Einladung an ${email} verschickt.`,
-  );
+  await expect(page.getByRole("status")).toHaveText(`Einladung an ${email} verschickt.`);
 
   // Der neue Mitarbeiter öffnet den Link aus der Mail.
   await page.goto("/");
@@ -106,8 +102,7 @@ test("Rollenänderung und Deaktivierung wirken sofort, die Daten bleiben erhalte
 
   // Rolf ist schon angemeldet und sieht als Mitarbeiter nur sich selbst.
   const rolfsSitzung = await schnittstelleAls(rolf);
-  const sichtbar = async () =>
-    (await rolfsSitzung.from("mitarbeiter").select("id")).data ?? [];
+  const sichtbar = async () => (await rolfsSitzung.from("mitarbeiter").select("id")).data ?? [];
   expect(await sichtbar()).toHaveLength(1);
 
   await meldeAn(page, firmaA.buero);
@@ -181,7 +176,11 @@ for (const rolle of ["mitarbeiter", "vorarbeiter"] as const) {
     await erwarteAngemeldet(page, daten.firmaA[rolle].name);
     await expect(page.getByRole("link", { name: "Mitarbeiter verwalten" })).toHaveCount(0);
 
-    for (const pfad of ["/mitarbeiter", "/mitarbeiter/neu", `/mitarbeiter/${daten.firmaA.buero.id}`]) {
+    for (const pfad of [
+      "/mitarbeiter",
+      "/mitarbeiter/neu",
+      `/mitarbeiter/${daten.firmaA.buero.id}`,
+    ]) {
       await page.goto(pfad);
       await expect(page.getByText("Mitarbeiter verwalten darf nur das Büro.")).toBeVisible();
     }

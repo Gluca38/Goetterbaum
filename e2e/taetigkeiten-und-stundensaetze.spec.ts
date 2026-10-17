@@ -1,11 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { erwarteAngemeldet, feld, meldeAn, testdaten } from "./testumgebung/hilfen";
-import {
-  dienstZugang,
-  legeKundeMitObjektAn,
-  legeTaetigkeitAn,
-} from "./testumgebung/testdaten";
+import { dienstZugang, legeKundeMitObjektAn, legeTaetigkeitAn } from "./testumgebung/testdaten";
 
 // Die Beschriftung eines Auswahlfelds enthält auch den gewählten Wert,
 // deshalb nur der Anfang.
@@ -75,9 +71,7 @@ test("Büro legt Tätigkeiten an, bearbeitet, archiviert und aktiviert sie wiede
   // Archivieren und wieder aktivieren
   await page.goto(taetigkeitSeite);
   await page.getByRole("button", { name: "Archivieren" }).click();
-  await expect(
-    page.getByText("Diese Tätigkeit ist archiviert.", { exact: false }),
-  ).toBeVisible();
+  await expect(page.getByText("Diese Tätigkeit ist archiviert.", { exact: false })).toBeVisible();
   expect((await taetigkeitAusDatenbank(name))?.archiviert).toBe(true);
 
   await page.getByRole("button", { name: "Wieder aktivieren" }).click();

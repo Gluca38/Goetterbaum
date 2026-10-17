@@ -9,9 +9,7 @@ export type Adresse = {
   ort: string;
 };
 
-export type AdressErgebnis =
-  | { ok: true; adresse: Adresse }
-  | { ok: false; fehler: string };
+export type AdressErgebnis = { ok: true; adresse: Adresse } | { ok: false; fehler: string };
 
 // Prüft die Adressfelder eines Formulars (strasse, adresszusatz, plz, ort).
 export function pruefeAdresse(formData: FormData): AdressErgebnis {

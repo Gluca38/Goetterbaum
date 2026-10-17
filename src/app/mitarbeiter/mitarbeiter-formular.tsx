@@ -33,11 +33,7 @@ export function MitarbeiterFormular({
         <label>
           {texte.mitarbeiter.email}
           <br />
-          <input
-            name="email"
-            type="email"
-            defaultValue={vorgabe?.email ?? ""}
-          />
+          <input name="email" type="email" defaultValue={vorgabe?.email ?? ""} />
         </label>
       </p>
       <p>

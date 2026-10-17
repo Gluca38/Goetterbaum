@@ -23,9 +23,7 @@ export async function anmelden(
   if (error) {
     const falsch = error.code === "invalid_credentials";
     return {
-      fehler: falsch
-        ? texte.anmelden.fehlerFalsch
-        : texte.anmelden.fehlerUnbekannt,
+      fehler: falsch ? texte.anmelden.fehlerFalsch : texte.anmelden.fehlerUnbekannt,
     };
   }
 
