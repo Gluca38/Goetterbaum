@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Fehlermeldung, useErfassungsAktion } from "@/app/erfassung/erfassungs-aktion";
 import styles from "@/app/erfassung/erfassung.module.css";
 import { ObjektAuswahl, TaetigkeitAuswahl } from "@/app/erfassung/objekt-auswahl";
-import type { Rueckmeldung } from "@/lib/rueckmeldung";
+import { START, type Rueckmeldung } from "@/lib/rueckmeldung";
 import { artAlsText, type ZeiteintragArt } from "@/lib/zeiterfassung/anzeige";
 import type { ObjektZurAuswahl, TaetigkeitZurAuswahl } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
@@ -54,11 +54,23 @@ export function NachtragFormular({
     von: vorgabe.von,
     bis: vorgabe.bis,
   });
-  const [zustand, speichern, laeuft] = useErfassungsAktion(aktion, MELDUNGEN);
-
-  useEffect(() => {
-    if (zustand.meldung) router.push("/");
-  }, [zustand, router]);
+  // Nach dem Speichern zurück zur Erfassung, und zwar direkt hier statt
+  // aus einem gespeicherten Zustand: Next.js hält besuchte Seiten samt
+  // Zustand vorrätig, ein "gespeichert" würde beim nächsten Öffnen sofort
+  // wieder wegführen. Deshalb auch die Felder zurück auf die Vorgabe.
+  const [zustand, speichern, laeuft] = useErfassungsAktion(
+    async (vorher: Rueckmeldung, formData: FormData) => {
+      const ergebnis = await aktion(vorher, formData);
+      if (ergebnis.fehler) return ergebnis;
+      setArt(vorgabe.art);
+      setObjektId(vorgabe.objekt_id);
+      setTaetigkeitId(vorgabe.taetigkeit_id);
+      setZeit({ datum: vorgabe.datum, von: vorgabe.von, bis: vorgabe.bis });
+      router.push("/");
+      return START;
+    },
+    MELDUNGEN,
+  );
 
   return (
     <form action={speichern} className={styles.formular}>
@@ -124,7 +136,6 @@ export function NachtragFormular({
         {laeuft ? t.speichernLaeuft : t.speichern}
       </button>
       <Fehlermeldung zustand={zustand} />
-      {zustand.meldung && <p role="status">{zustand.meldung}</p>}
       <p>
         <Link href="/">{t.zurueck}</Link>
       </p>

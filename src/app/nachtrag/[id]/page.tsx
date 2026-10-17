@@ -44,6 +44,9 @@ async function Aendern({ id: idVersprechen }: { id: Promise<string> }) {
   const beginn = Date.parse(eintrag.beginn);
   return (
     <NachtragFormular
+      // Neu aufbauen, wenn sich der Eintrag geändert hat: Next.js hält die
+      // Seite samt Formularzustand vorrätig.
+      key={JSON.stringify(eintrag)}
       aktion={zeiteintragAendern.bind(null, eintrag.id)}
       {...await ladeAuswahl(supabase)}
       vorgabe={{
