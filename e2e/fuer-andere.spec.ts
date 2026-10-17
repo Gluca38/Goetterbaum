@@ -40,6 +40,13 @@ async function waehleAus(page: Page, bezeichnung: string, taetigkeit: string) {
   await page.getByRole("combobox", { name: /^Tätigkeit/ }).selectOption({ label: taetigkeit });
 }
 
+// Der Hinweis, für wen nachgetragen oder geändert wird, auf der gerade
+// sichtbaren Seite. Next.js hält zuletzt besuchte Seiten unsichtbar
+// vorrätig, deren Hinweis würde sonst mitgefunden.
+function fuerHinweis(page: Page, name: string) {
+  return page.getByText(`Für ${name}`, { exact: true }).filter({ visible: true });
+}
+
 async function zeitenEintragen(page: Page, von: string, bis: string) {
   await feld(page, "Datum").fill(GESTERN);
   await feld(page, "Von").fill(von);
@@ -95,7 +102,7 @@ test("Ein Vorarbeiter startet, stoppt, trägt nach und ändert für einen Kolleg
   // Nachtrag für den Kollegen, danach geht es zurück zu seiner Erfassung.
   await page.getByRole("link", { name: "Zeit nachtragen" }).click();
   await expect(page.getByRole("heading", { name: "Zeit nachtragen" })).toBeVisible();
-  await expect(page.getByText(`Für ${kollege.name}`, { exact: true })).toBeVisible();
+  await expect(fuerHinweis(page, kollege.name)).toBeVisible();
   await page.getByRole("radio", { name: "Fahrt" }).check();
   await zeitenEintragen(page, "07:00", "08:00");
   await expect(page).toHaveURL(new RegExp(`/fuer-andere/${kollege.id}$`));
@@ -107,7 +114,7 @@ test("Ein Vorarbeiter startet, stoppt, trägt nach und ändert für einen Kolleg
   // Ändern des Nachtrags.
   await fahrt.getByRole("link", { name: "Ändern" }).click();
   await expect(page.getByRole("heading", { name: "Zeiteintrag ändern" })).toBeVisible();
-  await expect(page.getByText(`Für ${kollege.name}`, { exact: true })).toBeVisible();
+  await expect(fuerHinweis(page, kollege.name)).toBeVisible();
   await feld(page, "Bis").fill("08:30");
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(page).toHaveURL(new RegExp(`/fuer-andere/${kollege.id}$`));
@@ -166,7 +173,7 @@ test("Das Büro sieht bei jedem Eintrag, wer ihn angelegt hat, und ändert fremd
 
   await zeile.getByRole("link", { name: "Ändern" }).click();
   await expect(page.getByRole("heading", { name: "Zeiteintrag ändern" })).toBeVisible();
-  await expect(page.getByText(`Für ${kollege.name}`, { exact: true })).toBeVisible();
+  await expect(fuerHinweis(page, kollege.name)).toBeVisible();
   await feld(page, "Bis").fill("11:30");
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(page).toHaveURL(new RegExp(`/fuer-andere/${kollege.id}$`));
@@ -205,7 +212,7 @@ test("Das Büro ändert auch Einträge deaktivierter Mitarbeiter und kommt zur �
     .filter({ hasText: ehemaliger.name })
     .getByRole("link", { name: "Ändern" })
     .click();
-  await expect(page.getByText(`Für ${ehemaliger.name}`, { exact: true })).toBeVisible();
+  await expect(fuerHinweis(page, ehemaliger.name)).toBeVisible();
   await feld(page, "Bis").fill("14:15");
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(page).toHaveURL(/\/zeiteintraege$/);
