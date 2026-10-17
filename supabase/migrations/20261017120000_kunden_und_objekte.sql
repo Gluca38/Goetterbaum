@@ -4,11 +4,21 @@
 -- Firma (ADR-0001). Sie werden nie gelöscht, sondern archiviert und können
 -- wieder aktiviert werden. Mitarbeiter und Vorarbeiter haben vorerst keinen
 -- Zugriff; das Lesen der Objekte kommt mit der Zeiterfassung.
+--
+-- Zugriffsrechte für beide Tabellen: Nur das Büro der eigenen Firma liest,
+-- legt an und ändert. Gelöscht wird nie: Es gibt für niemanden außer dem
+-- Dienstschlüssel ein Löschrecht. Die Firma lässt sich nach dem Anlegen
+-- nicht mehr ändern, archiviert wird erst nach dem Anlegen. Die Regeln
+-- stehen jeweils direkt bei ihrer Tabelle (ADR-0003).
 
 begin;
 
 create type public.abrechnungszeitraum as enum ('monatlich', 'quartalsweise');
 create type public.abrechnungsart as enum ('pauschale', 'stunden');
+
+-- ---------------------------------------------------------------------------
+-- Kunde
+-- ---------------------------------------------------------------------------
 
 create table public.kunde (
   id uuid primary key default gen_random_uuid(),
@@ -29,10 +39,55 @@ create table public.kunde (
   unique (id, firma_id)
 );
 
+alter table public.kunde enable row level security;
+
+revoke all on public.kunde from anon, authenticated;
+grant select on public.kunde to authenticated;
+grant all on public.kunde to service_role;
+grant insert (firma_id, name, strasse, adresszusatz, plz, ort, abrechnungszeitraum)
+  on public.kunde to authenticated;
+grant update (name, strasse, adresszusatz, plz, ort, abrechnungszeitraum, archiviert)
+  on public.kunde to authenticated;
+
+create policy "Büro sieht Kunden der eigenen Firma"
+  on public.kunde
+  for select
+  to authenticated
+  using (
+    firma_id = (select privat.meine_firma_id())
+    and (select privat.meine_rolle()) = 'buero'
+  );
+
+create policy "Büro legt Kunden der eigenen Firma an"
+  on public.kunde
+  for insert
+  to authenticated
+  with check (
+    firma_id = (select privat.meine_firma_id())
+    and (select privat.meine_rolle()) = 'buero'
+  );
+
+create policy "Büro ändert Kunden der eigenen Firma"
+  on public.kunde
+  for update
+  to authenticated
+  using (
+    firma_id = (select privat.meine_firma_id())
+    and (select privat.meine_rolle()) = 'buero'
+  )
+  with check (
+    firma_id = (select privat.meine_firma_id())
+    and (select privat.meine_rolle()) = 'buero'
+  );
+
 comment on table public.kunde is
   'Wer die Rechnung bekommt. Wird nie gelöscht, sondern archiviert.';
 
 create index kunde_firma_id_idx on public.kunde (firma_id);
+
+-- ---------------------------------------------------------------------------
+-- Objekt
+-- ---------------------------------------------------------------------------
 
 create table public.objekt (
   id uuid primary key default gen_random_uuid(),
@@ -55,6 +110,49 @@ create table public.objekt (
     or (abrechnungsart = 'stunden' and pauschale_cent is null)
   )
 );
+
+alter table public.objekt enable row level security;
+
+revoke all on public.objekt from anon, authenticated;
+grant select on public.objekt to authenticated;
+grant all on public.objekt to service_role;
+grant insert (firma_id, kunde_id, bezeichnung, strasse, adresszusatz, plz, ort,
+              abrechnungsart, pauschale_cent)
+  on public.objekt to authenticated;
+grant update (kunde_id, bezeichnung, strasse, adresszusatz, plz, ort,
+              abrechnungsart, pauschale_cent, archiviert)
+  on public.objekt to authenticated;
+
+create policy "Büro sieht Objekte der eigenen Firma"
+  on public.objekt
+  for select
+  to authenticated
+  using (
+    firma_id = (select privat.meine_firma_id())
+    and (select privat.meine_rolle()) = 'buero'
+  );
+
+create policy "Büro legt Objekte der eigenen Firma an"
+  on public.objekt
+  for insert
+  to authenticated
+  with check (
+    firma_id = (select privat.meine_firma_id())
+    and (select privat.meine_rolle()) = 'buero'
+  );
+
+create policy "Büro ändert Objekte der eigenen Firma"
+  on public.objekt
+  for update
+  to authenticated
+  using (
+    firma_id = (select privat.meine_firma_id())
+    and (select privat.meine_rolle()) = 'buero'
+  )
+  with check (
+    firma_id = (select privat.meine_firma_id())
+    and (select privat.meine_rolle()) = 'buero'
+  );
 
 comment on table public.objekt is
   'Ein Arbeitsort mit Adresse, der zu genau einem Kunden gehört. Wird nie gelöscht, sondern archiviert.';
@@ -126,95 +224,5 @@ create trigger aktives_objekt_braucht_aktiven_kunden
 -- Zugriffsregeln gelten also auch dort. Direkt aufrufen soll sie niemand.
 revoke all on function privat.objekte_mit_kunde_archivieren() from public;
 revoke all on function privat.aktives_objekt_braucht_aktiven_kunden() from public;
-
--- ---------------------------------------------------------------------------
--- Zugriffsrechte
---
--- Nur das Büro der eigenen Firma liest, legt an und ändert. Gelöscht wird
--- nie: Es gibt für niemanden außer dem Dienstschlüssel ein Löschrecht.
--- Die Firma lässt sich nach dem Anlegen nicht mehr ändern, archiviert wird
--- erst nach dem Anlegen.
--- ---------------------------------------------------------------------------
-
-revoke all on public.kunde, public.objekt from anon, authenticated;
-grant select on public.kunde, public.objekt to authenticated;
-grant all on public.kunde, public.objekt to service_role;
-
-grant insert (firma_id, name, strasse, adresszusatz, plz, ort, abrechnungszeitraum)
-  on public.kunde to authenticated;
-grant update (name, strasse, adresszusatz, plz, ort, abrechnungszeitraum, archiviert)
-  on public.kunde to authenticated;
-
-grant insert (firma_id, kunde_id, bezeichnung, strasse, adresszusatz, plz, ort,
-              abrechnungsart, pauschale_cent)
-  on public.objekt to authenticated;
-grant update (kunde_id, bezeichnung, strasse, adresszusatz, plz, ort,
-              abrechnungsart, pauschale_cent, archiviert)
-  on public.objekt to authenticated;
-
-alter table public.kunde enable row level security;
-alter table public.objekt enable row level security;
-
-create policy "Büro sieht Kunden der eigenen Firma"
-  on public.kunde
-  for select
-  to authenticated
-  using (
-    firma_id = (select privat.meine_firma_id())
-    and (select privat.meine_rolle()) = 'buero'
-  );
-
-create policy "Büro legt Kunden der eigenen Firma an"
-  on public.kunde
-  for insert
-  to authenticated
-  with check (
-    firma_id = (select privat.meine_firma_id())
-    and (select privat.meine_rolle()) = 'buero'
-  );
-
-create policy "Büro ändert Kunden der eigenen Firma"
-  on public.kunde
-  for update
-  to authenticated
-  using (
-    firma_id = (select privat.meine_firma_id())
-    and (select privat.meine_rolle()) = 'buero'
-  )
-  with check (
-    firma_id = (select privat.meine_firma_id())
-    and (select privat.meine_rolle()) = 'buero'
-  );
-
-create policy "Büro sieht Objekte der eigenen Firma"
-  on public.objekt
-  for select
-  to authenticated
-  using (
-    firma_id = (select privat.meine_firma_id())
-    and (select privat.meine_rolle()) = 'buero'
-  );
-
-create policy "Büro legt Objekte der eigenen Firma an"
-  on public.objekt
-  for insert
-  to authenticated
-  with check (
-    firma_id = (select privat.meine_firma_id())
-    and (select privat.meine_rolle()) = 'buero'
-  );
-
-create policy "Büro ändert Objekte der eigenen Firma"
-  on public.objekt
-  for update
-  to authenticated
-  using (
-    firma_id = (select privat.meine_firma_id())
-    and (select privat.meine_rolle()) = 'buero'
-  )
-  with check (
-    firma_id = (select privat.meine_firma_id())
-    and (select privat.meine_rolle()) = 'buero'
-  );
 
 commit;
