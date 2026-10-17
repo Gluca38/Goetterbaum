@@ -7,6 +7,7 @@ import {
   type MeinZeiteintrag,
   type ZeiteintragArt,
 } from "./anzeige";
+import { freigabeFilter, type FreigabeFilter } from "./freigabe";
 import { protokollAnzeigen, type AngezeigteProtokollZeile, type ProtokollZeile } from "./protokoll";
 
 // Was ein Mitarbeiter beim Start sieht. Preise und Kunden liefern die
@@ -90,7 +91,8 @@ export async function ladeMitarbeiterZumErfassen(
 // Ein Zeiteintrag mit allem, was zum Ändern nötig ist, oder null, wenn es
 // ihn nicht gibt oder der angemeldete Nutzer ihn nicht sehen darf (normale
 // Mitarbeiter sehen nur ihre eigenen). unvollstaendig: Er läuft seit mehr
-// als 12 Stunden, zum Zeitpunkt des Ladens.
+// als 12 Stunden, zum Zeitpunkt des Ladens. freigegeben: Mitarbeiter und
+// Vorarbeiter dürfen ihn nicht mehr ändern.
 export type ZeiteintragZumAendern = {
   id: string;
   mitarbeiter_id: string;
@@ -100,6 +102,7 @@ export type ZeiteintragZumAendern = {
   beginn: string;
   ende: string | null;
   unvollstaendig: boolean;
+  freigegeben: boolean;
 };
 
 export async function ladeZeiteintragZumAendern(
@@ -109,16 +112,33 @@ export async function ladeZeiteintragZumAendern(
   if (!istId(id)) return null;
   const { data, error } = await supabase
     .from("zeiteintrag")
-    .select("id, mitarbeiter_id, art, objekt_id, taetigkeit_id, beginn, ende")
+    .select("id, mitarbeiter_id, art, objekt_id, taetigkeit_id, beginn, ende, freigegeben_am")
     .eq("id", id)
-    .maybeSingle<Omit<ZeiteintragZumAendern, "unvollstaendig">>();
+    .maybeSingle<
+      Omit<ZeiteintragZumAendern, "unvollstaendig" | "freigegeben"> & {
+        freigegeben_am: string | null;
+      }
+    >();
   if (error) throw error;
-  return data && { ...data, unvollstaendig: istUnvollstaendig(data, Date.now()) };
+  if (!data) return null;
+  const { freigegeben_am, ...eintrag } = data;
+  return {
+    ...eintrag,
+    unvollstaendig: istUnvollstaendig(eintrag, Date.now()),
+    freigegeben: freigegeben_am !== null,
+  };
 }
 
-// Ein Zeiteintrag, wie ihn das Büro in der Übersicht sieht.
-export type ZeiteintragDerFirma = Omit<MeinZeiteintrag, "angelegt_von"> & {
+// Ein Zeiteintrag, wie ihn das Büro in der Übersicht und bei der Freigabe
+// sieht. Kunde und Objekt fehlen bei Fahrten.
+export type ZeiteintragDerFirma = Omit<MeinZeiteintrag, "angelegt_von" | "freigegeben"> & {
+  mitarbeiter_id: string;
   mitarbeiter_name: string;
+  objekt_id: string | null;
+  kunde_id: string | null;
+  kunde_name: string | null;
+  freigegeben_am: string | null;
+  freigegeben_von_name: string | null;
 };
 
 // Fürs Büro: alle Zeiteinträge der Firma in den angezeigten Tagen und alle
@@ -197,4 +217,51 @@ export async function ladeZeiteintragMitProtokoll(
       taetigkeiten: new Map(taetigkeiten.data.map((t) => [t.id, t.name])),
     }),
   };
+}
+
+// Fürs Büro: die noch nicht freigegebenen Zeiteinträge, die im Zeitraum
+// des Filters aus der Adresszeile beginnen, nach Mitarbeiter und Beginn,
+// dazu der Filter und der Zeitpunkt, zu dem geladen wurde. Laufende sind
+// dabei, damit das Büro sieht, was noch fehlt; freigeben lassen sie sich
+// erst nach dem Beenden.
+export async function ladeEintraegeZurFreigabe(
+  supabase: SupabaseClient,
+  parameter: Record<string, string | string[] | undefined>,
+): Promise<{ filter: FreigabeFilter; eintraege: ZeiteintragDerFirma[]; jetzt: number }> {
+  const jetzt = Date.now();
+  const filter = freigabeFilter(parameter, jetzt);
+  let abfrage = supabase
+    .rpc("zeiteintraege_der_firma", { ab: filter.ab })
+    .gte("beginn", filter.ab)
+    .lt("beginn", filter.bisVor)
+    .is("freigegeben_am", null);
+  if (filter.mitarbeiter) abfrage = abfrage.eq("mitarbeiter_id", filter.mitarbeiter);
+  if (filter.kunde) abfrage = abfrage.eq("kunde_id", filter.kunde);
+  if (filter.objekt) abfrage = abfrage.eq("objekt_id", filter.objekt);
+  const { data, error } = await abfrage.order("mitarbeiter_name").order("beginn");
+  if (error) throw error;
+  return { filter, eintraege: data, jetzt };
+}
+
+// Was in den Filtern der Freigabe zur Wahl steht: alle Mitarbeiter, Kunden
+// und Objekte der Firma, auch deaktivierte und archivierte, denn auch ihre
+// Einträge brauchen eine Freigabe.
+export type FreigabeFilterAuswahl = {
+  mitarbeiter: { id: string; name: string }[];
+  kunden: { id: string; name: string }[];
+  objekte: { id: string; bezeichnung: string }[];
+};
+
+export async function ladeFreigabeFilterAuswahl(
+  supabase: SupabaseClient,
+): Promise<FreigabeFilterAuswahl> {
+  const [mitarbeiter, kunden, objekte] = await Promise.all([
+    supabase.from("mitarbeiter").select("id, name").order("name"),
+    supabase.from("kunde").select("id, name").order("name"),
+    supabase.from("objekt").select("id, bezeichnung").order("bezeichnung"),
+  ]);
+  if (mitarbeiter.error) throw mitarbeiter.error;
+  if (kunden.error) throw kunden.error;
+  if (objekte.error) throw objekte.error;
+  return { mitarbeiter: mitarbeiter.data, kunden: kunden.data, objekte: objekte.data };
 }

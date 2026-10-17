@@ -23,6 +23,7 @@ function eintrag(
     beginn,
     ende,
     nachtrag: false,
+    freigegeben: false,
     objekt_bezeichnung: "Haus A",
     taetigkeit_name: "Unterhaltsreinigung",
     angelegt_von: ICH,

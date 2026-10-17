@@ -12,6 +12,8 @@ type Stand = {
   beginn: string;
   ende: string | null;
   nachtrag: boolean;
+  // Fehlt in Ständen, die vor Einführung der Freigabe protokolliert wurden.
+  freigegeben_am?: string | null;
 };
 
 // Eine Zeile, wie sie die Datenbank-Funktion protokoll_zum_zeiteintrag
@@ -53,7 +55,8 @@ const zeitpunkt = new Intl.DateTimeFormat("de-DE", {
 
 const LEER = "–";
 
-function zeitAlsText(wert: string | null): string {
+// Ein Zeitpunkt als Datum und Uhrzeit in Berlin, z. B. "19.10.2026, 09:12".
+export function zeitAlsText(wert: string | null): string {
   return wert === null ? LEER : zeitpunkt.format(Date.parse(wert));
 }
 
@@ -72,6 +75,7 @@ function felder(stand: Stand, namen: Namen): [string, string][] {
     [t.beginn, zeitAlsText(stand.beginn)],
     [t.ende, zeitAlsText(stand.ende)],
     [t.nachtrag, stand.nachtrag ? t.ja : t.nein],
+    [t.freigegeben, zeitAlsText(stand.freigegeben_am ?? null)],
   ];
 }
 

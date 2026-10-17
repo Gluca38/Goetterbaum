@@ -27,8 +27,8 @@ export default function ZeiteintraegeUebersicht() {
   );
 }
 
-// Alle Zeiteinträge der Firma, der neueste zuerst. Nachträge sind
-// markiert, und bei jedem steht, wer ihn angelegt hat. Jeder Eintrag führt
+// Alle Zeiteinträge der Firma, der neueste zuerst. Nachträge und
+// freigegebene Einträge sind markiert, und bei jedem steht, wer ihn angelegt hat. Jeder Eintrag führt
 // zu seinem Änderungsprotokoll, beendete auch zum Ändern, unvollständige
 // zum Nachtragen des Endes.
 async function Liste() {
@@ -40,6 +40,8 @@ async function Liste() {
       <p>{t.hinweis(ANGEZEIGTE_TAGE)}</p>
       <p>
         <Link href="/unvollstaendige-eintraege">{t.zurPruefliste}</Link>
+        {" · "}
+        <Link href="/freigabe">{texte.freigabe.titel}</Link>
       </p>
       {eintraege.length === 0 ? (
         <p>{t.keine(ANGEZEIGTE_TAGE)}</p>
@@ -51,6 +53,7 @@ async function Liste() {
               <th>{t.spalteZeit}</th>
               <th>{t.spalteWas}</th>
               <th>{t.spalteNachtrag}</th>
+              <th>{texte.freigabe.markierung}</th>
               <th>{t.spalteAngelegtVon}</th>
               <th>{t.protokollOeffnen}</th>
               <th>{texte.nachtrag.aendern}</th>
@@ -67,6 +70,7 @@ async function Liste() {
                   </td>
                   <td>{wasUndWo(e)}</td>
                   <td>{e.nachtrag ? texte.nachtrag.markierung : ""}</td>
+                  <td>{e.freigegeben_am !== null ? texte.freigabe.markierung : ""}</td>
                   <td>{e.angelegt_von_name ?? texte.protokoll.unbekannt}</td>
                   <td>
                     <Link href={`/zeiteintraege/${e.id}`}>{t.protokollOeffnen}</Link>

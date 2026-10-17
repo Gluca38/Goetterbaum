@@ -59,6 +59,9 @@ async function Begruessung() {
           <p>
             <Link href="/unvollstaendige-eintraege">{texte.start.unvollstaendigePruefen}</Link>
           </p>
+          <p>
+            <Link href="/freigabe">{texte.start.zeiteintraegeFreigeben}</Link>
+          </p>
         </>
       )}
       <form action={abmelden}>

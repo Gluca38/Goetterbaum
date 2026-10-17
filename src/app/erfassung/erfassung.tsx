@@ -118,6 +118,11 @@ function Eintraege({
                   {e.nachtrag && (
                     <span className={styles.markierung}>{texte.nachtrag.markierung}</span>
                   )}
+                  {e.freigegeben && (
+                    <span className={`${styles.markierung} ${styles.freigegeben}`}>
+                      {texte.freigabe.markierung}
+                    </span>
+                  )}
                   <br />
                   {wasUndWo(e)}
                   {anleger && (
@@ -126,8 +131,13 @@ function Eintraege({
                       {anleger}
                     </>
                   )}
-                  <br />
-                  <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
+                  {/* Freigegebene ändert nur noch das Büro, über die Übersicht. */}
+                  {!e.freigegeben && (
+                    <>
+                      <br />
+                      <Link href={`/nachtrag/${e.id}`}>{texte.nachtrag.aendern}</Link>
+                    </>
+                  )}
                 </li>
               );
             })}

@@ -135,3 +135,8 @@
   font-size: 0.875rem;
   font-weight: bold;
 }
+
+.markierung.freigegeben {
+  background: #d1e7dd;
+  color: #0f5132;
+}

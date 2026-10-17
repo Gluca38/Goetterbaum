@@ -65,6 +65,24 @@ async function Aendern({
       </>
     );
   }
+  // Freigegebene Einträge ändert nur noch das Büro; die Datenbank sperrt sie
+  // für alle anderen.
+  if (eintrag.freigegeben && ich.rolle !== "buero") {
+    return (
+      <>
+        <p>{texte.freigabe.gesperrt}</p>
+        <p>
+          <Link
+            href={
+              eintrag.mitarbeiter_id !== ich.id ? `/fuer-andere/${eintrag.mitarbeiter_id}` : "/"
+            }
+          >
+            {texte.nachtrag.zurueck}
+          </Link>
+        </p>
+      </>
+    );
+  }
   const erfasst = await erfassterMitarbeiter(supabase, ich, eintrag.mitarbeiter_id, {
     zumAendern: true,
   });
