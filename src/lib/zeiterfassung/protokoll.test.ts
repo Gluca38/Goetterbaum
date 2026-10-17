@@ -74,6 +74,7 @@ test("Das Anlegen zeigt alle Angaben, das Ändern nur, was sich geändert hat", 
         { feld: "Ende", vorher: "–", nachher: "–" },
         { feld: "Nachtrag", vorher: "–", nachher: "nein" },
         { feld: "Freigegeben", vorher: "–", nachher: "–" },
+        { feld: "Abgerechnet", vorher: "–", nachher: "nein" },
       ],
     },
     {
@@ -147,5 +148,36 @@ test("Freigabe und Rücknahme der Freigabe stehen im Protokoll", () => {
   expect(zeilen.map((z) => z.aenderungen)).toEqual([
     [{ feld: "Freigegeben", vorher: "–", nachher: "19.10.2026, 09:12" }],
     [{ feld: "Freigegeben", vorher: "19.10.2026, 09:12", nachher: "–" }],
+  ]);
+});
+
+test("Abrechnung und Rücknahme der Abrechnung stehen im Protokoll", () => {
+  const freigegeben = { ...GESTOPPT, freigegeben_am: "2026-10-19T07:12:43.512+00:00" };
+  const abgerechnet = { ...freigegeben, abgerechnet_in: "7c6d5e4f-1a2b-4c3d-8e9f-0a1b2c3d4e5f" };
+  const zeilen = protokollAnzeigen(
+    [
+      {
+        id: 10,
+        aktion: "geaendert",
+        geaendert_am: "2026-11-02T08:30:12+00:00",
+        geaendert_von_name: "Petra Büro",
+        // Einträge aus der Zeit vor der Abrechnung haben das Feld noch nicht.
+        vorher: freigegeben,
+        nachher: abgerechnet,
+      },
+      {
+        id: 11,
+        aktion: "geaendert",
+        geaendert_am: "2026-11-03T10:01:44+00:00",
+        geaendert_von_name: "Petra Büro",
+        vorher: abgerechnet,
+        nachher: { ...freigegeben, abgerechnet_in: null },
+      },
+    ],
+    NAMEN,
+  );
+  expect(zeilen.map((z) => z.aenderungen)).toEqual([
+    [{ feld: "Abgerechnet", vorher: "nein", nachher: "ja" }],
+    [{ feld: "Abgerechnet", vorher: "ja", nachher: "nein" }],
   ]);
 });

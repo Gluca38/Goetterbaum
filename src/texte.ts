@@ -394,6 +394,7 @@ export const texte = {
     ende: "Ende",
     nachtrag: "Nachtrag",
     freigegeben: "Freigegeben",
+    abgerechnet: "Abgerechnet",
     ja: "ja",
     nein: "nein",
     unbekannt: "unbekannt",
@@ -453,6 +454,39 @@ export const texte = {
     unbekannt: "unbekannt",
     csvExport: "Als CSV-Datei herunterladen",
     csvDateiname: (kunde: string, monat: string) => `Rechnungsvorbereitung ${kunde} ${monat}.csv`,
+    hinweisMarkieren:
+      "Nach dem Export als abgerechnet markieren: Die enthaltenen Zeiteinträge und Pauschal-Monate sind danach für alle gesperrt und erscheinen in keiner weiteren Rechnungsvorbereitung.",
+    alsAbgerechnetMarkieren: "Als abgerechnet markieren",
+    markierenLaeuft: "Wird markiert …",
+    markiert: "Als abgerechnet markiert.",
+    fehlerVeraendert:
+      "Die Rechnungsvorbereitung hat sich inzwischen geändert, z. B. durch eine neue Freigabe. Bitte prüfe sie noch einmal und markiere sie dann.",
+    fehlerMarkieren:
+      "Die Abrechnung wurde nicht gespeichert. Bitte lade die Seite neu und versuche es noch einmal.",
+    bisherigeAbrechnungen: "Bisherige Abrechnungen",
+    keineAbrechnungen: "Für diesen Kunden gibt es noch keine Abrechnungen.",
+    spalteZeitraum: "Zeitraum",
+    spalteAbgerechnet: "Abgerechnet",
+    spalteStatus: "Status",
+    amVon: (wann: string, wer: string) => `${wann} von ${wer}`,
+    gueltig: "gültig",
+    zurueckgenommenAmVon: (wann: string, wer: string) => `zurückgenommen am ${wann} von ${wer}`,
+    zuruecknehmen: "Zurücknehmen",
+    rueckfrage:
+      "Abrechnung wirklich zurücknehmen? Ihre Zeiteinträge und Pauschal-Monate sind danach wieder änderbar und abrechenbar. Eine schon geschriebene Rechnung musst du selbst stornieren.",
+    jaZuruecknehmen: "Ja, zurücknehmen",
+    abbrechen: "Abbrechen",
+    zuruecknehmenLaeuft: "Wird zurückgenommen …",
+    zurueckgenommen: "Abrechnung zurückgenommen.",
+    fehlerZuruecknehmen:
+      "Die Abrechnung wurde nicht zurückgenommen. Bitte lade die Seite neu und versuche es noch einmal.",
+  },
+  abrechnung: {
+    markierung: "Abgerechnet",
+    abgerechnet:
+      "Abgerechnet. Der Zeiteintrag ist für alle gesperrt, bis das Büro die Abrechnung in der Rechnungsvorbereitung zurücknimmt.",
+    gesperrt:
+      "Dieser Zeiteintrag ist abgerechnet und kann nicht mehr geändert werden. Ist er falsch, muss das Büro zuerst die Abrechnung zurücknehmen.",
   },
   einstellungen: {
     titel: "Einstellungen der Firma",

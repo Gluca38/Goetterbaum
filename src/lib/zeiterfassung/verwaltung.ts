@@ -92,7 +92,8 @@ export async function ladeMitarbeiterZumErfassen(
 // ihn nicht gibt oder der angemeldete Nutzer ihn nicht sehen darf (normale
 // Mitarbeiter sehen nur ihre eigenen). unvollstaendig: Er läuft seit mehr
 // als 12 Stunden, zum Zeitpunkt des Ladens. freigegeben: Mitarbeiter und
-// Vorarbeiter dürfen ihn nicht mehr ändern.
+// Vorarbeiter dürfen ihn nicht mehr ändern. abgerechnet: niemand darf ihn
+// mehr ändern.
 export type ZeiteintragZumAendern = {
   id: string;
   mitarbeiter_id: string;
@@ -103,6 +104,7 @@ export type ZeiteintragZumAendern = {
   ende: string | null;
   unvollstaendig: boolean;
   freigegeben: boolean;
+  abgerechnet: boolean;
 };
 
 export async function ladeZeiteintragZumAendern(
@@ -112,20 +114,24 @@ export async function ladeZeiteintragZumAendern(
   if (!istId(id)) return null;
   const { data, error } = await supabase
     .from("zeiteintrag")
-    .select("id, mitarbeiter_id, art, objekt_id, taetigkeit_id, beginn, ende, freigegeben_am")
+    .select(
+      "id, mitarbeiter_id, art, objekt_id, taetigkeit_id, beginn, ende, freigegeben_am, abgerechnet_in",
+    )
     .eq("id", id)
     .maybeSingle<
-      Omit<ZeiteintragZumAendern, "unvollstaendig" | "freigegeben"> & {
+      Omit<ZeiteintragZumAendern, "unvollstaendig" | "freigegeben" | "abgerechnet"> & {
         freigegeben_am: string | null;
+        abgerechnet_in: string | null;
       }
     >();
   if (error) throw error;
   if (!data) return null;
-  const { freigegeben_am, ...eintrag } = data;
+  const { freigegeben_am, abgerechnet_in, ...eintrag } = data;
   return {
     ...eintrag,
     unvollstaendig: istUnvollstaendig(eintrag, Date.now()),
     freigegeben: freigegeben_am !== null,
+    abgerechnet: abgerechnet_in !== null,
   };
 }
 
@@ -177,20 +183,27 @@ export async function ladeZeiteintragMitProtokoll(
   id: string,
 ): Promise<{
   eintrag: ZeiteintragDerFirma;
+  abgerechnet: boolean;
   protokoll: AngezeigteProtokollZeile[];
   jetzt: number;
 } | null> {
   if (!istId(id)) return null;
   const jetzt = Date.now();
-  const [eintrag, protokoll] = await Promise.all([
+  const [eintrag, protokoll, abrechnung] = await Promise.all([
     supabase
       .rpc("zeiteintraege_der_firma", { ab: "-infinity" })
       .eq("id", id)
       .maybeSingle<ZeiteintragDerFirma>(),
     supabase.rpc("protokoll_zum_zeiteintrag", { eintrag: id }),
+    supabase
+      .from("zeiteintrag")
+      .select("abgerechnet_in")
+      .eq("id", id)
+      .maybeSingle<{ abgerechnet_in: string | null }>(),
   ]);
   if (eintrag.error) throw eintrag.error;
   if (protokoll.error) throw protokoll.error;
+  if (abrechnung.error) throw abrechnung.error;
   if (!eintrag.data) return null;
 
   const zeilen: ProtokollZeile[] = protokoll.data;
@@ -211,6 +224,7 @@ export async function ladeZeiteintragMitProtokoll(
 
   return {
     eintrag: eintrag.data,
+    abgerechnet: (abrechnung.data?.abgerechnet_in ?? null) !== null,
     jetzt,
     protokoll: protokollAnzeigen(zeilen, {
       objekte: new Map(objekte.data.map((o) => [o.id, o.bezeichnung])),
