@@ -356,6 +356,11 @@ export const texte = {
     alle: "Alle",
     anzeigen: "Anzeigen",
     keine: "In diesem Zeitraum wartet kein Zeiteintrag auf Freigabe.",
+    freigegebeneZeigen: "Freigegebene zeigen",
+    hinweisFreigegebene:
+      "Schon freigegebene Zeiteinträge im gewählten Zeitraum. Eine Freigabe nimmst du im Protokoll des Eintrags zurück.",
+    keineFreigegebenen: "In diesem Zeitraum ist noch kein Zeiteintrag freigegeben.",
+    fehlerZuruecknehmen: "Die Freigabe wurde nicht zurückgenommen. Bitte versuche es noch einmal.",
     spalteAuswahl: "Auswahl",
     auswaehlen: (was: string) => `${was} auswählen`,
     alleAuswaehlen: "Alle auswählen",

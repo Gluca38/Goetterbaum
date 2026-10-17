@@ -4,16 +4,18 @@ import { NurFuerBuero } from "@/app/nur-fuer-buero";
 import { createClient } from "@/lib/supabase/server";
 import { istUnvollstaendig, tagUndZeit, wasUndWo } from "@/lib/zeiterfassung/anzeige";
 import type { FreigabeFilter } from "@/lib/zeiterfassung/freigabe";
+import { zeitAlsText } from "@/lib/zeiterfassung/protokoll";
 import {
   ladeEintraegeZurFreigabe,
   ladeFreigabeFilterAuswahl,
+  type ZeiteintragDerFirma,
 } from "@/lib/zeiterfassung/verwaltung";
 import { texte } from "@/texte";
 import styles from "../page.module.css";
 import { FreigabeFormular, type FreigabeZeile } from "./freigabe-formular";
 
 // Zeitraum und Filter stehen in der Adresszeile (von, bis, mitarbeiter,
-// kunde, objekt), damit sich eine Auswahl als Link merken lässt.
+// kunde, objekt, freigegebene), damit sich eine Auswahl als Link merken lässt.
 export default function Freigabe({ searchParams }: PageProps<"/freigabe">) {
   return (
     <div className={styles.page}>
@@ -30,8 +32,9 @@ export default function Freigabe({ searchParams }: PageProps<"/freigabe">) {
 }
 
 // Die noch nicht freigegebenen Zeiteinträge im Zeitraum, nach Mitarbeiter
-// und Beginn. Nachträge sind markiert. Jeder führt zu seinem
-// Änderungsprotokoll, wo sich eine Freigabe auch zurücknehmen lässt.
+// und Beginn, oder auf Wunsch die schon freigegebenen. Nachträge sind
+// markiert. Jeder führt zu seinem Änderungsprotokoll, wo sich eine
+// Freigabe auch zurücknehmen lässt.
 async function Liste({ parameter }: { parameter: PageProps<"/freigabe">["searchParams"] }) {
   const t = texte.freigabe;
   const supabase = await createClient();
@@ -60,9 +63,15 @@ async function Liste({ parameter }: { parameter: PageProps<"/freigabe">["searchP
 
   return (
     <>
-      <p>{t.hinweis}</p>
+      <p>{filter.freigegebene ? t.hinweisFreigegebene : t.hinweis}</p>
       <FilterFormular filter={filter} auswahl={auswahl} />
-      {zeilen.length === 0 ? <p>{t.keine}</p> : <FreigabeFormular zeilen={zeilen} />}
+      {filter.freigegebene ? (
+        <Freigegebene eintraege={eintraege} />
+      ) : zeilen.length === 0 ? (
+        <p>{t.keine}</p>
+      ) : (
+        <FreigabeFormular zeilen={zeilen} />
+      )}
       <p>
         <Link href="/zeiteintraege">{texte.zeiteintraege.zurUebersicht}</Link>
       </p>
@@ -70,6 +79,48 @@ async function Liste({ parameter }: { parameter: PageProps<"/freigabe">["searchP
         <Link href="/">{texte.stammdaten.zurStartseite}</Link>
       </p>
     </>
+  );
+}
+
+// Die schon freigegebenen Einträge mit wann und von wem. Zurückgenommen
+// wird eine Freigabe im Änderungsprotokoll des Eintrags.
+function Freigegebene({ eintraege }: { eintraege: ZeiteintragDerFirma[] }) {
+  const t = texte.freigabe;
+  if (eintraege.length === 0) return <p>{t.keineFreigegebenen}</p>;
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>{texte.zeiteintraege.spalteMitarbeiter}</th>
+          <th>{texte.zeiteintraege.spalteZeit}</th>
+          <th>{texte.zeiteintraege.spalteWas}</th>
+          <th>{t.kunde}</th>
+          <th>{texte.zeiteintraege.spalteNachtrag}</th>
+          <th>{t.markierung}</th>
+          <th>{texte.zeiteintraege.protokollOeffnen}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {eintraege.map((e) => (
+          <tr key={e.id}>
+            <td>{e.mitarbeiter_name}</td>
+            <td>{tagUndZeit(e.beginn, e.ende, texte.zeiteintraege.laeuft)}</td>
+            <td>{wasUndWo(e)}</td>
+            <td>{e.kunde_name ?? ""}</td>
+            <td>{e.nachtrag ? texte.nachtrag.markierung : ""}</td>
+            <td>
+              {t.freigegebenAmVon(
+                zeitAlsText(e.freigegeben_am),
+                e.freigegeben_von_name ?? texte.protokoll.unbekannt,
+              )}
+            </td>
+            <td>
+              <Link href={`/zeiteintraege/${e.id}`}>{texte.zeiteintraege.protokollOeffnen}</Link>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -123,6 +174,15 @@ function FilterFormular({
             </option>
           ))}
         </select>
+      </label>{" "}
+      <label>
+        <input
+          type="checkbox"
+          name="freigegebene"
+          value="ja"
+          defaultChecked={filter.freigegebene}
+        />{" "}
+        {t.freigegebeneZeigen}
       </label>{" "}
       <button type="submit">{t.anzeigen}</button>
     </form>

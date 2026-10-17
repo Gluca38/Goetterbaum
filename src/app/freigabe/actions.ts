@@ -63,7 +63,7 @@ export async function freigabeZuruecknehmen(id: string): Promise<Rueckmeldung> {
     .select("id");
   if (error) {
     console.error("Freigabe zurücknehmen fehlgeschlagen", error);
-    return FEHLER(texte.stammdaten.fehlerUnbekannt);
+    return FEHLER(texte.freigabe.fehlerZuruecknehmen);
   }
 
   refresh();

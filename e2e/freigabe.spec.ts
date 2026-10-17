@@ -119,12 +119,20 @@ test("Das Büro gibt Einträge einzeln und gesammelt frei, der Mitarbeiter sieht
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Speichern" })).toHaveCount(0);
 
-  // Das Büro nimmt die Freigabe zurück; das Protokoll zeigt es.
+  // Das Büro findet den Eintrag unter den freigegebenen, nimmt die Freigabe
+  // zurück, und das Protokoll zeigt es.
   await page.goto("/");
   await meldeAb(page);
   await meldeAn(page, buero);
   await erwarteAngemeldet(page, buero.name);
-  await page.goto(`/zeiteintraege/${erster.id}`);
+  await page.goto("/freigabe");
+  await page.getByRole("combobox", { name: /^Mitarbeiter/ }).selectOption({ label: ich.name });
+  await page.getByRole("checkbox", { name: "Freigegebene zeigen" }).check();
+  await page.getByRole("button", { name: "Anzeigen" }).click();
+  await expect(page).toHaveURL(/freigegebene=ja/);
+  await expect(zeile(unvollstaendig.bezeichnung)).toHaveCount(0);
+  await expect(zeile(erster.bezeichnung)).toContainText(`von ${buero.name}`);
+  await zeile(erster.bezeichnung).getByRole("link", { name: "Protokoll" }).click();
   await expect(page.getByText(`von ${buero.name}`).filter({ visible: true })).toContainText(
     "Freigegeben am",
   );

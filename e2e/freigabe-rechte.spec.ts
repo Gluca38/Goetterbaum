@@ -188,12 +188,12 @@ test("Freigegebene Einträge sind für Mitarbeiter und Vorarbeiter gesperrt, nic
   expect(meine).toEqual([expect.objectContaining({ id, freigegeben: true })]);
 
   // Das Büro behebt weiterhin Fehler; die Freigabe bleibt.
-  const korrigiert = await alsBuero
+  const behoben = await alsBuero
     .from("zeiteintrag")
     .update({ ende: vor(29) })
     .eq("id", id)
     .select("id");
-  expect(korrigiert.data).toHaveLength(1);
+  expect(behoben.data).toHaveLength(1);
   expect((await gespeicherterEintrag(id)).freigegeben_von).toBe(buero.id);
 });
 

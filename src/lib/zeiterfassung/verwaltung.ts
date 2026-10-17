@@ -219,8 +219,9 @@ export async function ladeZeiteintragMitProtokoll(
   };
 }
 
-// Fürs Büro: die noch nicht freigegebenen Zeiteinträge, die im Zeitraum
-// des Filters aus der Adresszeile beginnen, nach Mitarbeiter und Beginn,
+// Fürs Büro: die noch nicht freigegebenen (oder auf Wunsch die schon
+// freigegebenen) Zeiteinträge, die im Zeitraum des Filters aus der
+// Adresszeile beginnen, nach Mitarbeiter und Beginn,
 // dazu der Filter und der Zeitpunkt, zu dem geladen wurde. Laufende sind
 // dabei, damit das Büro sieht, was noch fehlt; freigeben lassen sie sich
 // erst nach dem Beenden.
@@ -233,8 +234,10 @@ export async function ladeEintraegeZurFreigabe(
   let abfrage = supabase
     .rpc("zeiteintraege_der_firma", { ab: filter.ab })
     .gte("beginn", filter.ab)
-    .lt("beginn", filter.bisVor)
-    .is("freigegeben_am", null);
+    .lt("beginn", filter.bisVor);
+  abfrage = filter.freigegebene
+    ? abfrage.not("freigegeben_am", "is", null)
+    : abfrage.is("freigegeben_am", null);
   if (filter.mitarbeiter) abfrage = abfrage.eq("mitarbeiter_id", filter.mitarbeiter);
   if (filter.kunde) abfrage = abfrage.eq("kunde_id", filter.kunde);
   if (filter.objekt) abfrage = abfrage.eq("objekt_id", filter.objekt);

@@ -10,6 +10,7 @@ test("Ohne Angaben gilt der Zeitraum vom Ersten des Vormonats bis heute, ganze T
     mitarbeiter: null,
     kunde: null,
     objekt: null,
+    freigegebene: false,
     // Mitternacht in Berlin (Sommerzeit, UTC + 2 Stunden) am ersten Tag
     // und am Tag nach dem letzten.
     ab: "2026-08-31T22:00:00.000Z",
@@ -98,4 +99,11 @@ test("Ohne angehakten Eintrag gibt es einen Hinweis", () => {
     ok: false,
     fehler: "Bitte wähle mindestens einen Zeiteintrag aus.",
   });
+});
+
+test("Ohne Angabe zeigt die Liste die nicht freigegebenen, auf Wunsch die freigegebenen Einträge", () => {
+  const jetzt = Date.parse("2026-10-17T10:00:00Z");
+  expect(freigabeFilter({}, jetzt).freigegebene).toBe(false);
+  expect(freigabeFilter({ freigegebene: "ja" }, jetzt).freigegebene).toBe(true);
+  expect(freigabeFilter({ freigegebene: "vielleicht" }, jetzt).freigegebene).toBe(false);
 });

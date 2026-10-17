@@ -10,12 +10,15 @@ import { istDatum } from "./nachtrag";
 // Tage ("JJJJ-MM-TT"), beide eingeschlossen; ab und bisVor die Zeitpunkte
 // dazu als ISO-Text (Mitternacht am ersten Tag bzw. am Tag nach dem
 // letzten). Ohne Mitarbeiter, Kunde oder Objekt wird danach nicht gefiltert.
+// freigegebene: statt der wartenden die schon freigegebenen Einträge, um
+// eine Freigabe zurückzunehmen.
 export type FreigabeFilter = {
   von: string;
   bis: string;
   mitarbeiter: string | null;
   kunde: string | null;
   objekt: string | null;
+  freigegebene: boolean;
   ab: string;
   bisVor: string;
 };
@@ -58,6 +61,7 @@ export function freigabeFilter(parameter: Parameter, jetzt: number): FreigabeFil
     mitarbeiter: kennung(parameter.mitarbeiter),
     kunde: kennung(parameter.kunde),
     objekt: kennung(parameter.objekt),
+    freigegebene: einzeln(parameter.freigegebene) === "ja",
     ab: new Date(berlinerMitternacht(von)).toISOString(),
     bisVor: new Date(berlinerMitternacht(datum(bJahr, bMonat, bTag + 1))).toISOString(),
   };
