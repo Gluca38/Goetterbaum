@@ -58,6 +58,13 @@ jobs:
       - run: npx supabase db push --include-all --db-url "$STAGING_DB_URL"
         env:
           STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
+      # Die Supabase-Schnittstelle (PostgREST) liest danach ihre Liste der
+      # Tabellen neu ein. Sonst kennt sie neue Tabellen nicht und die App
+      # stürzt ab (so geschehen nach #28 auf Produktion, siehe #29).
+      - name: Schnittstelle liest die Tabellen neu ein
+        run: psql "$STAGING_DB_URL" -v ON_ERROR_STOP=1 -c "notify pgrst, 'reload schema';"
+        env:
+          STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
 
   e2e-tests:
     # Name muss "E2E-Tests" bleiben: Pflicht-Prüfung in den Regeln für main
